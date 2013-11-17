@@ -9,7 +9,18 @@ namespace cloudmutex
 class ClientHandler
 {
 public:
+    inline void terminate()
+    {
+        keepRunning = false;
+    }
+
     void handle(const SocketInfo &socket);
+
+protected:
+    const std::string readData(const int &socket);
+
+private:
+    bool keepRunning;
 };
 
 }

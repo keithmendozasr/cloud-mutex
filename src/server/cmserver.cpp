@@ -79,7 +79,8 @@ int main(void)
             return 1;
         }
     }
-    
+    handler.terminate();
+
     socket.closeSocket();
     return 0;
 }
