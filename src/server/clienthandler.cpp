@@ -15,9 +15,11 @@ using namespace log4cplus;
 namespace cloudmutex
 {
 
+ClientHandler::ClientHandler() : logger(Logger::getInstance("ClientHandler"))
+{}
+
 void ClientHandler::handle(const SocketInfo &socket)
 {
-    Logger logger = Logger::getInstance("ClientHandler");
     string ip = socket.getSocketIP();
     LOG4CPLUS_INFO(logger, "Handle client " << ip);
 
