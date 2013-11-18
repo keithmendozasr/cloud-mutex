@@ -1,13 +1,13 @@
 #include <string>
 #include <cstring>
 #include <system_error>
-
-#include <sys/select.h>
+#include <exception>
 
 #include <log4cplus/logger.h>
 #include <log4cplus/loggingmacros.h>
 
 #include "server/clienthandler.h"
+#include "common/timeoutexception.h"
 
 using namespace std;
 using namespace log4cplus;
@@ -23,11 +23,9 @@ void ClientHandler::handle(const SocketInfo &socket)
     string ip = socket.getSocketIP();
     LOG4CPLUS_INFO(logger, "Handle client " << ip);
 
-    fd_set rdfs;
-    FD_ZERO(&rdfs);
-    FD_SET(socket.getSocket(), &rdfs);
+    FD_ZERO(&readFd);
+    FD_SET(socket.getSocket(), &readFd);
 
-    struct timeval timeout;
     timeout.tv_sec=15;
     timeout.tv_usec=0;
 
@@ -35,41 +33,32 @@ void ClientHandler::handle(const SocketInfo &socket)
     keepRunning = true;
     while(keepRunning)
     {
-        int retVal = select(socket.getSocket()+1, &rdfs, NULL, NULL, &timeout);
-        if(retVal == -1)
+        size_t bufSize = 1024;
+        char buf[bufSize];
+
+        try
         {
-            int err = errno;
-            LOG4CPLUS_WARN(logger, "Error encountered waiting for socket to be ready. Error message: " << strerror(err));
-            break;
-        }
-        else if(retVal == 0)
-        {
-            LOG4CPLUS_WARN(logger, "Timeout waiting for socket to be ready");
-            break;
-        }
-        else
-        {
-            if(FD_ISSET(socket.getSocket(), &rdfs))
+            bufSize = readData(socket.getSocket(), buf, bufSize);
+            msg.clear();
+            msg.append(buf, bufSize);
+            if(msg == "end")
             {
-                LOG4CPLUS_DEBUG(logger, "Reading from "<<ip);
-                try
-                {
-                    msg = readData(socket.getSocket());
-                    if(msg == "end")
-                    {
-                        LOG4CPLUS_INFO(logger, "Client logging out");
-                        shutdown(socket.getSocket(), SHUT_RDWR);
-                        break;
-                    }
-                    else
-                        LOG4CPLUS_DEBUG(logger, "Message from client: >>>"<<msg<<"<<<");
-                }
-                catch(system_error &e)
-                {
-                    LOG4CPLUS_ERROR(logger, "Error encountered while receiving data from client. Error message: "<<e.what());
-                    break;
-                }
+                LOG4CPLUS_INFO(logger, "Client logging out");
+                shutdown(socket.getSocket(), SHUT_RDWR);
+                break;
             }
+            else
+                LOG4CPLUS_DEBUG(logger, "Message from client: >>>"<<msg<<"<<<");
+        }
+        catch(TimeoutException &e)
+        {
+            LOG4CPLUS_WARN(logger, "Timeout while waiting for message from client");
+            break;
+        }
+        catch(exception &e)
+        {
+            LOG4CPLUS_ERROR(logger, "Error encountered while reading message from client: "<<e.what());
+            break;
         }
     } //while(keepRunning)
 
@@ -77,21 +66,37 @@ void ClientHandler::handle(const SocketInfo &socket)
     LOG4CPLUS_DEBUG(logger, __PRETTY_FUNCTION__<<" exiting");
 } //void ClientHandler::handle(const SocketInfo &socket)
 
-
-const string ClientHandler::readData(const int &socket)
+const size_t ClientHandler::readData(const int &socket, char *data, const size_t &dataSize)
 {
-    const size_t msgSize = 1024;
-    char msg[msgSize];
-    int readSize = read(socket, msg, msgSize);
-    if(readSize < 0)
+    if(data == nullptr)
+        throw invalid_argument("\"data\" parameter is null");
+
+    int retVal = select(socket+1, &readFd, NULL, NULL, &timeout);
+    if(retVal == -1)
     {
         int err = errno;
-        throw system_error(err, system_category(), strerror(err));
+        char errmsg[256];
+        strerror_r(err, errmsg, 256);
+        LOG4CPLUS_WARN(logger, "Error encountered waiting for socket to be ready. Error message: " << errmsg);
+        throw system_error(err, system_category(), errmsg);
+    }
+    else if(retVal == 0)
+    {
+        throw TimeoutException("Timeout waiting for data from client");
+    }
+    else if(FD_ISSET(socket, &readFd))
+    {
+        retVal = read(socket, data, dataSize);
+        if(retVal < 0)
+        {
+            int err = errno;
+            char errmsg[256];
+            strerror_r(err, errmsg, 256);
+            throw system_error(err, system_category(), errmsg);
+        }
     }
 
-    msg[readSize]='\0';
-
-    return msg;
+    return retVal;
 }
 
 } //namespace cloudmutex
