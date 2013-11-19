@@ -25,6 +25,8 @@ void ClientHandler::handle(const SocketInfo &socket)
 
     FD_ZERO(&readFd);
     FD_SET(socket.getSocket(), &readFd);
+    FD_ZERO(&writeFd);
+    FD_SET(socket.getSocket(), &writeFd);
 
     timeout.tv_sec=15;
     timeout.tv_usec=0;
@@ -33,14 +35,18 @@ void ClientHandler::handle(const SocketInfo &socket)
     keepRunning = true;
     while(keepRunning)
     {
-        size_t bufSize = 1024;
-        char buf[bufSize];
-
         try
         {
-            bufSize = readData(socket.getSocket(), buf, bufSize);
+            size_t bufSize = 256;
+            char buf[bufSize];
             msg.clear();
-            msg.append(buf, bufSize);
+            do
+            {
+                bufSize = readData(socket.getSocket(), buf, bufSize);
+                LOG4CPLUS_TRACE(logger, "Read "<<bufSize<<" data");
+                msg.append(buf, bufSize);
+            }while(bufSize != 0);
+
             if(msg == "end")
             {
                 LOG4CPLUS_INFO(logger, "Client logging out");
@@ -58,6 +64,37 @@ void ClientHandler::handle(const SocketInfo &socket)
         catch(exception &e)
         {
             LOG4CPLUS_ERROR(logger, "Error encountered while reading message from client: "<<e.what());
+            break;
+        }
+
+        try
+        {
+            msg = string("\nEcho back: ") + msg;
+            const char *t = msg.c_str();
+            int written=0;
+            const int &maxLen = msg.length()+1;
+            do
+            {
+                int len = writeData(socket.getSocket(), t+written, maxLen-written);
+                if(!len)
+                {
+                    LOG4CPLUS_WARN(logger, "Failed to send data");
+                    break;
+                }
+                
+                LOG4CPLUS_TRACE(logger, "Written "<<len<<". Amount left: "<<(maxLen-written));
+                written+=len;
+            }while(written <maxLen);
+            LOG4CPLUS_DEBUG(logger, "Echo complete");
+        }
+        catch(TimeoutException &e)
+        {
+            LOG4CPLUS_WARN(logger, "Timeout encountered while sending message to client");
+            break;
+        }
+        catch(exception &e)
+        {
+            LOG4CPLUS_ERROR(logger, "Error encountered while sending message to client: "<<e.what());
             break;
         }
     } //while(keepRunning)
@@ -93,6 +130,40 @@ const size_t ClientHandler::readData(const int &socket, char *data, const size_t
             char errmsg[256];
             strerror_r(err, errmsg, 256);
             throw system_error(err, system_category(), errmsg);
+        }
+    }
+
+    return retVal;
+}
+
+const size_t ClientHandler::writeData(const int &socket, const char *msg, const size_t &msgSize)
+{
+    int retVal = select(socket+1, NULL, &writeFd, NULL, &timeout);
+    if(retVal == -1)
+    {
+        int err = errno;
+        char errmsg[256];
+        strerror_r(err, errmsg, 256);
+        throw system_error(err, system_category(), errmsg);
+    }
+    else if(retVal == 0)
+    {
+        throw TimeoutException("Timeout waiting for socket to be ready");
+    }
+    else
+    {
+        if(FD_ISSET(socket, &readFd))
+        {
+            retVal = write(socket, msg, msgSize);
+            if(retVal < 0)
+            {
+                int err = errno;
+                char errmsg[256];
+                strerror_r(err, errmsg, 256);
+                throw system_error(err, system_category(), errmsg);
+            }
+            else
+                LOG4CPLUS_TRACE(logger, "Read "<<retVal<<" bytes");
         }
     }
 

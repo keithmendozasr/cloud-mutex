@@ -24,11 +24,12 @@ public:
 
 protected:
     const size_t readData(const int &socket, char *msg, const size_t &msgSize);
+    const size_t writeData(const int &socket, const char *msg, const size_t &msgSize);
 
 private:
     bool keepRunning;
     log4cplus::Logger logger;
-    fd_set readFd;
+    fd_set readFd, writeFd;
     timeval timeout;
 };
 
