@@ -36,7 +36,7 @@ void ServerSocket::initServer(const int &backlog, const int &port)
     else
         LOG4CPLUS_DEBUG(logger, "Using stored listen port");
     
-    initSocket(to_string(listenPort));
+    initSocket(listenPort);
     startListener(backlog);
 }
 

@@ -17,10 +17,13 @@ SocketInfo::SocketInfo() :
 	sockfd(-1)
 {}
 
-void SocketInfo::initSocket(const string &port, const string &host)
+void SocketInfo::initSocket(const unsigned int &port, const string &host)
 {
 	if(sockfd != -1)
 		throw logic_error("Instance already intialized");
+
+    if(port > 65535)
+        throw invalid_argument("port parameter > 65535");
 	
     int rv;
     struct addrinfo hints;
@@ -31,7 +34,7 @@ void SocketInfo::initSocket(const string &port, const string &host)
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE; // use my IP
 
-	rv = getaddrinfo((host.size() ? host.c_str() : NULL), port.c_str(), &hints, &servInfoTmp);
+	rv = getaddrinfo((host.size() ? host.c_str() : NULL), to_string(port).c_str(), &hints, &servInfoTmp);
     if (rv != 0)
     {
         throw runtime_error(gai_strerror(rv));

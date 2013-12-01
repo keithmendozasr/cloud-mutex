@@ -48,7 +48,7 @@ public:
     const size_t getAddrInfoSize() const;
     
 protected:
-    void initSocket(const std::string &port, const std::string &host = "");
+    void initSocket(const unsigned int &port, const std::string &host = "");
     void setAddrInfo(const sockaddr_storage *addr);
 
 private:
