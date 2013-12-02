@@ -6,15 +6,28 @@
 
 namespace cloudmutex 
 {
+
+/**
+ * Exception when socket timeout occurs
+ */
 class TimeoutException : public std::exception
 {
 public:
+    /**
+     * Constructor override from std::exception
+     */
     explicit TimeoutException(const std::string &what) noexcept : msg(what) 
     {}
 
+    /**
+     * Copy constructor
+     */
     TimeoutException(const TimeoutException &cpy) noexcept : msg(cpy.msg)
     {}
 
+    /**
+     * Assignment operator overload
+     */
     TimeoutException & operator = (const TimeoutException &cpy) noexcept
     {
         msg = cpy.msg;

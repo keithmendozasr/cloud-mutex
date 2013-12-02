@@ -14,12 +14,28 @@
 namespace cloudmutex
 {
 
+/**
+ * Class to manage sockets
+ */
 class SocketInfo
 {
 public:
+    /**
+     * Default constructor
+     */
     explicit SocketInfo();
+
+    /**
+     * Constructor taking socket descriptor and pointer to sockaddr_storage
+     *
+     * \param sockfd Socket descriptor
+     * \param addr Pointer to sockaddr_storage structure associated with the sockfd
+     */
     SocketInfo(const int &sockfd, const sockaddr_storage *addr);
     
+    /**
+     * Return the socket descriptor
+     */
     inline int getSocket() const
     {
         if(sockfd == -1)
@@ -28,6 +44,9 @@ public:
         return sockfd;
     }
     
+    /**
+     * Close the socket connection
+     */
     inline void closeSocket()
     {
         if(sockfd != -1)
@@ -38,17 +57,41 @@ public:
         }
     }
 
+    /**
+     * Get the IP address the socket is connected to
+     */
     const std::string getSocketIP() const;
     
+    /**
+     * Access the sockaddr_storage structure associated with the socket connection
+     */
     inline const struct sockaddr_storage getAddrInfo() const
     {
         return addrInfo;
     }
     
+    /**
+     * Get the address info structure's size
+     */
     const size_t getAddrInfoSize() const;
     
 protected:
+    /**
+     * Initialize a socket connection instance
+     *
+     * \throws invalid_argument if port param not valid port number
+     * \throws logic_error is socket instance already created
+     * \throws runtime_error if unable to create socket instance
+     * \param port Port number to use with socket connection
+     * \param host Host to connect to as client, or host to listen from as server
+     */
     void initSocket(const unsigned int &port, const std::string &host = "");
+
+    /**
+     * Set the sockaddr_storage structure to associate to this class' instance
+     *
+     * \param addr Pointer to sockaddr_storage to asssociate
+     */
     void setAddrInfo(const sockaddr_storage *addr);
 
 private:
