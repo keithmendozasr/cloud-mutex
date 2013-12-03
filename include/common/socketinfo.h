@@ -31,7 +31,7 @@ public:
      * \param sockfd Socket descriptor
      * \param addr Pointer to sockaddr_storage structure associated with the sockfd
      */
-    SocketInfo(const int &sockfd, const sockaddr_storage *addr);
+    SocketInfo(const int &sockfd, const sockaddr_storage *addr, const size_t &addrSize);
     
     /**
      * Return the socket descriptor
@@ -73,7 +73,10 @@ public:
     /**
      * Get the address info structure's size
      */
-    const size_t getAddrInfoSize() const;
+    const size_t getAddrInfoSize() const
+    {
+        return addrInfoSize;
+    }
     
 protected:
     /**
@@ -92,11 +95,12 @@ protected:
      *
      * \param addr Pointer to sockaddr_storage to asssociate
      */
-    void setAddrInfo(const sockaddr_storage *addr);
+    void setAddrInfo(const sockaddr_storage *addr, const size_t &addrSize);
 
 private:
     log4cplus::Logger logger;
     struct sockaddr_storage addrInfo;
+    size_t addrInfoSize;
     int sockfd;
 };
 

@@ -104,7 +104,7 @@ void ServerSocket::handleConnection(ClientHandler &handler)
         throw range_error("Unexpected value in clientAddr.ss_family");
     }*/
     
-    SocketInfo clientInfo(new_fd, &clientAddr);
+    SocketInfo clientInfo(new_fd, &clientAddr, sin_size);
     string ip = clientInfo.getSocketIP();
     LOG4CPLUS_DEBUG(logger, "Connection from " << ip);
     LOG4CPLUS_DEBUG(logger, "Passing client to handler");

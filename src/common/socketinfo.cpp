@@ -63,7 +63,7 @@ void SocketInfo::initSocket(const unsigned int &port, const string &host)
         }
     }
 	
-	setAddrInfo((const struct sockaddr_storage *)servInfoTmp->ai_addr);
+	setAddrInfo((const struct sockaddr_storage *)servInfoTmp->ai_addr, servInfoTmp->ai_addrlen);
 }
 
 const string SocketInfo::getSocketIP() const
@@ -110,7 +110,7 @@ const string SocketInfo::getSocketIP() const
     return ip;
 }
 
-SocketInfo::SocketInfo(const int &sockfd, const sockaddr_storage *addr) : logger(Logger::getInstance("SocketInfo"))
+SocketInfo::SocketInfo(const int &sockfd, const sockaddr_storage *addr, const size_t &addrSize) : logger(Logger::getInstance("SocketInfo"))
 {
 	if(sockfd < 3)
 	{
@@ -123,12 +123,13 @@ SocketInfo::SocketInfo(const int &sockfd, const sockaddr_storage *addr) : logger
 		throw invalid_argument("addr is null");
 	
 	this->sockfd = sockfd;
-	setAddrInfo(addr);
+	setAddrInfo(addr, addrSize);
 }
 
-void SocketInfo::setAddrInfo(const sockaddr_storage *addr)
+void SocketInfo::setAddrInfo(const sockaddr_storage *addr, const size_t &addrSize)
 {
 	memmove(&addrInfo, addr, sizeof(struct sockaddr_storage));
+    addrInfoSize = addrSize;
 }
 
 }
