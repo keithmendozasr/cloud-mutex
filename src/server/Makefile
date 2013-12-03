@@ -18,9 +18,6 @@ all: cmserver
 debug: CXXFLAGS+=-ggdb3 -O0
 debug: cmserver
 
-analyze: CXXFLAGS+=--analyze
-analyze: $(DEPS) $(OBJS)
-
 cmserver: $(DEPS) $(OBJS)
 	$(CXX) $(OBJS) -o cmserver -llog4cplus
 
