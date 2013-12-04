@@ -1,9 +1,6 @@
 #ifndef SERVER_SOCKET_H
 #define SERVER_SOCKET_H
 
-#include <stdexcept>
-#include <system_error>
-
 #include <log4cplus/logger.h>
 
 #include "common/socketinfo.h"
@@ -61,10 +58,6 @@ private:
     log4cplus::Logger logger;
     int listenPort;
     
-    inline void throwSystemError(const int &err, const std::string &msg)
-    {
-        throw std::system_error(err, std::system_category(), msg);
-    }
     
 }; //class ServerSocket
 

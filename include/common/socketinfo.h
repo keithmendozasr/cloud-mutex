@@ -2,6 +2,7 @@
 #define CLOUDMUTEX_COMMON_SOCKETINFO_H
 
 #include <stdexcept>
+#include <system_error>
 #include <string>
 #include <memory>
 
@@ -96,6 +97,11 @@ protected:
      * \param addr Pointer to sockaddr_storage to asssociate
      */
     void setAddrInfo(const sockaddr_storage *addr, const size_t &addrSize);
+
+    inline void throwSystemError(const int &err, const std::string &msg)
+    {
+        throw std::system_error(err, std::system_category(), msg);
+    }
 
 private:
     log4cplus::Logger logger;

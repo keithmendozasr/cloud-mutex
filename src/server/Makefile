@@ -1,10 +1,5 @@
 .PHONY: cmserver
 
-CXX=g++
-CXXFLAGS=-Wall -Werror -std=c++0x -I../../include/ -Wno-unused-value
-
-COMMON_DIR=../common
-
 OBJS=../common/socketinfo.o \
 	serversocket.o \
 	clienthandler.o \
