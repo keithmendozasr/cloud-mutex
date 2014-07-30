@@ -78,6 +78,12 @@ int main(void)
             socket.closeSocket();
             return 1;
         }
+        catch(system_error &e)
+        {
+            LOG4CPLUS_FATAL(logger, "Failed to handle connection. Error message: "<<e.what());
+            socket.closeSocket();
+            return 1;
+        }
     }
     handler.terminate();
 

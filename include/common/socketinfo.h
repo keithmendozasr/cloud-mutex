@@ -79,6 +79,29 @@ public:
         return addrInfoSize;
     }
     
+    /**
+     * Attempt to read from client.
+     *
+     * \throws std::invalid_argument data parameter is null
+     * \throws std::system_error Error encountered while waiting for message to arrive
+     * \throws TimeoutException when timeout reached while waiting for data to arrive
+     * \param data Buffer to place received data
+     * \param dataSize Size of data
+     * \return Number of bytes received
+     */
+    const size_t readData(char *data, const size_t &dataSize);
+
+    /**
+     * Attempt to send to client
+     *
+     * \throws std::system_error Error encountered while waiting for socket to be ready to send message
+     * \throws TimeoutException when timeout reached while waiting for socket to be ready to send message
+     * \param msg Data to send
+     * \param msgSize Size of msg
+     * \return Number of bytes sent
+     */
+    const size_t writeData(const char *msg, const size_t &msgSize);
+
 protected:
     /**
      * Initialize a socket connection instance
@@ -108,6 +131,9 @@ private:
     struct sockaddr_storage addrInfo;
     size_t addrInfoSize;
     int sockfd;
+
+    fd_set readFd, writeFd;
+    timeval timeout;
 };
 
 } //namespace cloudmutex

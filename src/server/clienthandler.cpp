@@ -18,18 +18,11 @@ namespace cloudmutex
 ClientHandler::ClientHandler() : logger(Logger::getInstance("ClientHandler"))
 {}
 
-void ClientHandler::handle(const SocketInfo &socket)
+void ClientHandler::handle(const SocketInfo &sockParam)
 {
+    SocketInfo &socket = const_cast<SocketInfo &> (sockParam);
     string ip = socket.getSocketIP();
     LOG4CPLUS_INFO(logger, "Handle client " << ip);
-
-    FD_ZERO(&readFd);
-    FD_SET(socket.getSocket(), &readFd);
-    FD_ZERO(&writeFd);
-    FD_SET(socket.getSocket(), &writeFd);
-
-    timeout.tv_sec=15;
-    timeout.tv_usec=0;
 
     string msg;
     keepRunning = true;
@@ -42,7 +35,7 @@ void ClientHandler::handle(const SocketInfo &socket)
             msg.clear();
             do
             {
-                bufSize = readData(socket.getSocket(), buf, bufSize);
+                bufSize = socket.readData(buf, bufSize);
                 LOG4CPLUS_TRACE(logger, "Read "<<bufSize<<" data");
                 msg.append(buf, bufSize);
             }while(bufSize != 0);
@@ -75,7 +68,7 @@ void ClientHandler::handle(const SocketInfo &socket)
             const int &maxLen = msg.length()+1;
             do
             {
-                int len = writeData(socket.getSocket(), t+written, maxLen-written);
+                int len = socket.writeData(t+written, maxLen-written);
                 if(!len)
                 {
                     LOG4CPLUS_WARN(logger, "Failed to send data");
@@ -103,71 +96,5 @@ void ClientHandler::handle(const SocketInfo &socket)
     LOG4CPLUS_DEBUG(logger, __PRETTY_FUNCTION__<<" exiting");
 } //void ClientHandler::handle(const SocketInfo &socket)
 
-const size_t ClientHandler::readData(const int &socket, char *data, const size_t &dataSize)
-{
-    if(data == nullptr)
-        throw invalid_argument("\"data\" parameter is null");
-
-    int retVal = select(socket+1, &readFd, NULL, NULL, &timeout);
-    if(retVal == -1)
-    {
-        int err = errno;
-        char errmsg[256];
-        strerror_r(err, errmsg, 256);
-        LOG4CPLUS_WARN(logger, "Error encountered waiting for socket to be ready. Error message: " << errmsg);
-        throw system_error(err, system_category(), errmsg);
-    }
-    else if(retVal == 0)
-    {
-        throw TimeoutException("Timeout waiting for data from client");
-    }
-    else if(FD_ISSET(socket, &readFd))
-    {
-        retVal = read(socket, data, dataSize);
-        if(retVal < 0)
-        {
-            int err = errno;
-            char errmsg[256];
-            strerror_r(err, errmsg, 256);
-            throw system_error(err, system_category(), errmsg);
-        }
-    }
-
-    return retVal;
-}
-
-const size_t ClientHandler::writeData(const int &socket, const char *msg, const size_t &msgSize)
-{
-    int retVal = select(socket+1, NULL, &writeFd, NULL, &timeout);
-    if(retVal == -1)
-    {
-        int err = errno;
-        char errmsg[256];
-        strerror_r(err, errmsg, 256);
-        throw system_error(err, system_category(), errmsg);
-    }
-    else if(retVal == 0)
-    {
-        throw TimeoutException("Timeout waiting for socket to be ready");
-    }
-    else
-    {
-        if(FD_ISSET(socket, &readFd))
-        {
-            retVal = write(socket, msg, msgSize);
-            if(retVal < 0)
-            {
-                int err = errno;
-                char errmsg[256];
-                strerror_r(err, errmsg, 256);
-                throw system_error(err, system_category(), errmsg);
-            }
-            else
-                LOG4CPLUS_TRACE(logger, "Read "<<retVal<<" bytes");
-        }
-    }
-
-    return retVal;
-}
 
 } //namespace cloudmutex

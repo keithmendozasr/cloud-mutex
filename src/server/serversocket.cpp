@@ -73,7 +73,7 @@ void ServerSocket::startListener(const int &backlog)
 void ServerSocket::handleConnection(ClientHandler &handler)
 {
     struct sockaddr_storage clientAddr;
-    socklen_t sin_size = sizeof clientAddr;
+    socklen_t sin_size = sizeof(clientAddr);
     
     int new_fd = accept(getSocket(), (struct sockaddr *)&clientAddr, &sin_size);
     if (new_fd == -1)
@@ -86,23 +86,15 @@ void ServerSocket::handleConnection(ClientHandler &handler)
         }
         else
         {
-            throwSystemError(err, "Failed to receive client connection");
+            char errmsg[256];
+            strerror_r(err, errmsg, 256);
+            ostringstream msg;
+            msg<<"Failed to receive client connection. Code: "<<err<<" Error message: "<<errmsg;
+            throwSystemError(err, msg.str());
         }
     }
 
     LOG4CPLUS_DEBUG(logger, "Initializing SocketInfo for client");
-    /*struct sockaddr *sockAddr;
-    switch(clientAddr.ss_family)
-    {
-    case AF_INET:
-        sockAddr = reinterpret_cast<struct sockaddr *>(reinterpret_cast<struct sockaddr_in *>(&clientAddr));
-        break;
-    case AF_INET6:
-        sockAddr = reinterpret_cast<struct sockaddr *>(reinterpret_cast<struct sockaddr_in6 *>(&clientAddr));
-        break;
-    default:
-        throw range_error("Unexpected value in clientAddr.ss_family");
-    }*/
     
     SocketInfo clientInfo(new_fd, &clientAddr, sin_size);
     string ip = clientInfo.getSocketIP();

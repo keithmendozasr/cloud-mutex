@@ -1,10 +1,12 @@
 #include <cstring>
 #include <arpa/inet.h>
 #include <cstring>
+#include <system_error>
 
 #include <log4cplus/loggingmacros.h>
 
 #include "common/socketinfo.h"
+#include "common/timeoutexception.h"
 
 using namespace std;
 using namespace log4cplus;
@@ -63,6 +65,14 @@ void SocketInfo::initSocket(const unsigned int &port, const string &host)
         }
     }
 	
+    FD_ZERO(&readFd);
+    FD_SET(getSocket(), &readFd);
+    FD_ZERO(&writeFd);
+    FD_SET(getSocket(), &writeFd);
+
+    timeout.tv_sec=15;
+    timeout.tv_usec=0;
+
 	setAddrInfo((const struct sockaddr_storage *)servInfoTmp->ai_addr, servInfoTmp->ai_addrlen);
 }
 
@@ -123,6 +133,13 @@ SocketInfo::SocketInfo(const int &sockfd, const sockaddr_storage *addr, const si
 		throw invalid_argument("addr is null");
 	
 	this->sockfd = sockfd;
+    FD_ZERO(&readFd);
+    FD_SET(getSocket(), &readFd);
+    FD_ZERO(&writeFd);
+    FD_SET(getSocket(), &writeFd);
+
+    timeout.tv_sec=15;
+    timeout.tv_usec=0;
 	setAddrInfo(addr, addrSize);
 }
 
@@ -132,4 +149,70 @@ void SocketInfo::setAddrInfo(const sockaddr_storage *addr, const size_t &addrSiz
     addrInfoSize = addrSize;
 }
 
+const size_t SocketInfo::readData(char *data, const size_t &dataSize)
+{
+    if(data == nullptr)
+        throw invalid_argument("\"data\" parameter is null");
+
+    int retVal = select(sockfd+1, &readFd, NULL, NULL, &timeout);
+    if(retVal == -1)
+    {
+        int err = errno;
+        char errmsg[256];
+        strerror_r(err, errmsg, 256);
+        LOG4CPLUS_WARN(logger, "Error encountered waiting for socket to be ready. Error message: " << errmsg);
+        throw system_error(err, system_category(), errmsg);
+    }
+    else if(retVal == 0)
+    {
+        throw TimeoutException("Timeout waiting for data from client");
+    }
+    else if(FD_ISSET(sockfd, &readFd))
+    {
+        retVal = read(sockfd, data, dataSize);
+        if(retVal < 0)
+        {
+            int err = errno;
+            char errmsg[256];
+            strerror_r(err, errmsg, 256);
+            throw system_error(err, system_category(), errmsg);
+        }
+    }
+
+    return retVal;
+}
+
+const size_t SocketInfo::writeData(const char *msg, const size_t &msgSize)
+{
+    int retVal = select(sockfd+1, NULL, &writeFd, NULL, &timeout);
+    if(retVal == -1)
+    {
+        int err = errno;
+        char errmsg[256];
+        strerror_r(err, errmsg, 256);
+        throw system_error(err, system_category(), errmsg);
+    }
+    else if(retVal == 0)
+    {
+        throw TimeoutException("Timeout waiting for socket to be ready");
+    }
+    else
+    {
+        if(FD_ISSET(sockfd, &readFd))
+        {
+            retVal = write(sockfd, msg, msgSize);
+            if(retVal < 0)
+            {
+                int err = errno;
+                char errmsg[256];
+                strerror_r(err, errmsg, 256);
+                throw system_error(err, system_category(), errmsg);
+            }
+            else
+                LOG4CPLUS_TRACE(logger, "Read "<<retVal<<" bytes");
+        }
+    }
+
+    return retVal;
+}
 }
