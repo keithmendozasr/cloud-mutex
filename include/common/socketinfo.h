@@ -33,6 +33,11 @@ public:
      * \param addr Pointer to sockaddr_storage structure associated with the sockfd
      */
     SocketInfo(const int &sockfd, const sockaddr_storage *addr, const size_t &addrSize);
+
+    virtual ~SocketInfo()
+    {
+        closeSocket();
+    };
     
     /**
      * Return the socket descriptor
