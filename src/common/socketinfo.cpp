@@ -114,10 +114,14 @@ const string SocketInfo::getSocketIP() const
 		buf[INET6_ADDRSTRLEN] = '\0';
 	}
 	else
+    {
+        delete[] buf;
 		throw invalid_argument("Unexpected sa_family value");
+    }
 	
 	ip = buf;
-	
+	delete[] buf;
+
 	LOG4CPLUS_TRACE(logger, __PRETTY_FUNCTION__<<" Value of ip: "<<ip);
     return ip;
 }
