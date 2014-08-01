@@ -75,8 +75,8 @@ void ClientHandler::handle(const SocketInfo &sockParam)
                     break;
                 }
                 
-                LOG4CPLUS_TRACE(logger, "Written "<<len<<". Amount left: "<<(maxLen-written));
                 written+=len;
+                LOG4CPLUS_TRACE(logger, "Written "<<len<<". Amount left: "<<(maxLen-written));
             }while(written <maxLen);
             LOG4CPLUS_DEBUG(logger, "Echo complete");
         }
