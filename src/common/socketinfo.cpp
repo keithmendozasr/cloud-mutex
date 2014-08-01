@@ -36,6 +36,7 @@ void SocketInfo::initSocket(const unsigned int &port, const string &host)
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE; // use my IP
 
+    LOG4CPLUS_TRACE(logger, "Getting addrinfo for host "<<host<<" port "<<port);
 	rv = getaddrinfo((host.size() ? host.c_str() : NULL), to_string(port).c_str(), &hints, &servInfoTmp);
     if (rv != 0)
     {
@@ -63,6 +64,11 @@ void SocketInfo::initSocket(const unsigned int &port, const string &host)
             LOG4CPLUS_DEBUG(logger, "Socket ready");
             break;
         }
+    }
+
+    if(sockfd == -1)
+    {
+        throw runtime_error("No address info found");
     }
 	
     FD_ZERO(&readFd);
@@ -209,7 +215,7 @@ const size_t SocketInfo::writeData(const char *msg, const size_t &msgSize)
                 throw system_error(err, generic_category(), errmsg);
             }
             else
-                LOG4CPLUS_TRACE(logger, "Read "<<retVal<<" bytes");
+                LOG4CPLUS_TRACE(logger, "Wrote "<<retVal<<" bytes");
         }
     }
 
