@@ -6,7 +6,7 @@
 namespace cloudmutex
 {
 
-class ClientSocket : private SocketInfo
+class ClientSocket : public SocketInfo
 {
 public:
     explicit ClientSocket() : logger(log4cplus::Logger::getInstance("ClientSocket"))

@@ -30,7 +30,12 @@ int main(void)
         if(socket.initClient(9876, "localhost"))
         {
             LOG4CPLUS_DEBUG(logger, "Connected to server");
+            socket.writeData("Hello there",strlen("Hello there"));
             sleep(3);
+            char buf[256];
+            int r = socket.readData(buf, 255);
+            buf[r]='\0';
+            LOG4CPLUS_INFO(logger, buf);
         }
         else
             LOG4CPLUS_FATAL(logger, "Failed to connect to server");
