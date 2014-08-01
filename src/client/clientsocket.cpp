@@ -27,7 +27,7 @@ const bool ClientSocket::initClient(const unsigned &port, const string &server)
         int err = errno;
         char errmsg[256];
         strerror_r(err, errmsg, 256);
-        LOG4CPLUS_ERROR(logger, "Failed to connect to server. Error message: "<<err);
+        LOG4CPLUS_ERROR(logger, "Failed to connect to server. Error message: "<<errmsg);
         retVal = false;
     }//connect failed
     else
