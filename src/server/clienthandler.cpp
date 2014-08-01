@@ -85,6 +85,14 @@ void ClientHandler::handle(const SocketInfo &sockParam)
             LOG4CPLUS_WARN(logger, "Timeout encountered while sending message to client");
             break;
         }
+        catch(system_error &e)
+        {
+            if(e.code() == generic_category().default_error_condition(EPIPE))
+            {
+                LOG4CPLUS_INFO(logger, "Client disconnected");
+                break;
+            }
+        }
         catch(exception &e)
         {
             LOG4CPLUS_ERROR(logger, "Error encountered while sending message to client: "<<e.what());

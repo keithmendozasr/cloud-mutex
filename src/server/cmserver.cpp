@@ -44,7 +44,7 @@ int main(void)
     
     action.sa_handler = sigHandler;
     
-    if(sigaction(SIGINT, &action, NULL))
+    if(sigaction(SIGINT, &action, NULL) || signal(SIGPIPE, SIG_IGN))
     {
         LOG4CPLUS_FATAL(logger, "Failed to initialize signal handler. Error: "<<strerror(errno));
         return 1;

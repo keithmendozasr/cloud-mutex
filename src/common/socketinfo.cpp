@@ -161,7 +161,7 @@ const size_t SocketInfo::readData(char *data, const size_t &dataSize)
         char errmsg[256];
         strerror_r(err, errmsg, 256);
         LOG4CPLUS_WARN(logger, "Error encountered waiting for socket to be ready. Error message: " << errmsg);
-        throw system_error(err, system_category(), errmsg);
+        throw system_error(err, generic_category(), errmsg);
     }
     else if(retVal == 0)
     {
@@ -175,7 +175,7 @@ const size_t SocketInfo::readData(char *data, const size_t &dataSize)
             int err = errno;
             char errmsg[256];
             strerror_r(err, errmsg, 256);
-            throw system_error(err, system_category(), errmsg);
+            throw system_error(err, generic_category(), errmsg);
         }
     }
 
@@ -190,7 +190,7 @@ const size_t SocketInfo::writeData(const char *msg, const size_t &msgSize)
         int err = errno;
         char errmsg[256];
         strerror_r(err, errmsg, 256);
-        throw system_error(err, system_category(), errmsg);
+        throw system_error(err, generic_category(), errmsg);
     }
     else if(retVal == 0)
     {
@@ -206,7 +206,7 @@ const size_t SocketInfo::writeData(const char *msg, const size_t &msgSize)
                 int err = errno;
                 char errmsg[256];
                 strerror_r(err, errmsg, 256);
-                throw system_error(err, system_category(), errmsg);
+                throw system_error(err, generic_category(), errmsg);
             }
             else
                 LOG4CPLUS_TRACE(logger, "Read "<<retVal<<" bytes");
