@@ -71,10 +71,6 @@ void SocketInfo::initSocket(const unsigned int &port, const string &host)
         throw runtime_error("No address info found");
     }
 	
-    FD_ZERO(&readFd);
-    FD_SET(getSocket(), &readFd);
-    FD_ZERO(&writeFd);
-    FD_SET(getSocket(), &writeFd);
 
     timeout.tv_sec=15;
     timeout.tv_usec=0;
@@ -126,9 +122,9 @@ const string SocketInfo::getSocketIP() const
     return ip;
 }
 
-SocketInfo::SocketInfo(const int &sockfd, const sockaddr_storage *addr, const size_t &addrSize) : logger(Logger::getInstance("SocketInfo"))
+SocketInfo::SocketInfo(const int &sockfd, const sockaddr_storage *addr, const size_t &addrSize) : logger(Logger::getInstance("SocketInfo")), sockfd(sockfd)
 {
-	if(sockfd < 3)
+	if(this->sockfd < 3)
 	{
 		string msg = "sockfd value: ";
 		msg += to_string(sockfd);
@@ -137,12 +133,6 @@ SocketInfo::SocketInfo(const int &sockfd, const sockaddr_storage *addr, const si
 	
 	if(!addr)
 		throw invalid_argument("addr is null");
-	
-	this->sockfd = sockfd;
-    FD_ZERO(&readFd);
-    FD_SET(getSocket(), &readFd);
-    FD_ZERO(&writeFd);
-    FD_SET(getSocket(), &writeFd);
 
     timeout.tv_sec=15;
     timeout.tv_usec=0;
@@ -159,6 +149,11 @@ const size_t SocketInfo::readData(char *data, const size_t &dataSize)
 {
     if(data == nullptr)
         throw invalid_argument("\"data\" parameter is null");
+
+    const int &sockfd = getSocket();
+    fd_set readFd;
+    FD_ZERO(&readFd);
+    FD_SET(sockfd, &readFd);
 
     int retVal = select(sockfd+1, &readFd, NULL, NULL, &timeout);
     if(retVal == -1)
@@ -183,6 +178,10 @@ const size_t SocketInfo::readData(char *data, const size_t &dataSize)
             strerror_r(err, errmsg, 256);
             throw system_error(err, generic_category(), errmsg);
         }
+        else if(retVal == 0)
+            throw system_error(EPIPE, generic_category());
+        else
+            LOG4CPLUS_TRACE(logger, "read complete. Value of retVal: " <<retVal);
     }
 
     return retVal;
@@ -190,6 +189,11 @@ const size_t SocketInfo::readData(char *data, const size_t &dataSize)
 
 const size_t SocketInfo::writeData(const char *msg, const size_t &msgSize)
 {
+    const int &sockfd = getSocket();
+
+    fd_set writeFd;
+    FD_ZERO(&writeFd);
+    FD_SET(sockfd, &writeFd);
     int retVal = select(sockfd+1, NULL, &writeFd, NULL, &timeout);
     if(retVal == -1)
     {
@@ -204,7 +208,7 @@ const size_t SocketInfo::writeData(const char *msg, const size_t &msgSize)
     }
     else
     {
-        if(FD_ISSET(sockfd, &readFd))
+        if(FD_ISSET(sockfd, &writeFd))
         {
             retVal = write(sockfd, msg, msgSize);
             if(retVal < 0)

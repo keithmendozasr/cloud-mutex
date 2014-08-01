@@ -137,7 +137,6 @@ private:
     size_t addrInfoSize;
     int sockfd;
 
-    fd_set readFd, writeFd;
     timeval timeout;
 };
 
