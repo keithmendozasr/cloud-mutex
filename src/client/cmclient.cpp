@@ -13,8 +13,6 @@ using namespace std;
 using namespace log4cplus;
 using namespace cloudmutex;
 
-//SocketInfo && startListener(const string &port, const unsigned int &backlog)
-//SocketInfo 
 int main(void)
 {
     //TODO: Make this configurable
