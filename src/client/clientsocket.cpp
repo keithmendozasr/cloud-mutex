@@ -7,7 +7,7 @@
 #include <sys/select.h>
 
 #include <client/clientsocket.h>
-
+#include <log4cplus/loggingmacros.h>
 using namespace std;
 namespace cloudmutex
 {
