@@ -1,6 +1,5 @@
 #include <cstring>
-#include <arpa/inet.h>
-#include <cstring>
+#include <cstdio>
 #include <system_error>
 
 #include <log4cplus/loggingmacros.h>
@@ -19,10 +18,13 @@ SocketInfo::SocketInfo() :
 	sockfd(-1)
 {}
 
-void SocketInfo::initSocket(const unsigned int &port, const string &host)
+void SocketInfo::initSocket(const unsigned int &port, const string &host, struct addrinfo **servInfo)
 {
 	if(sockfd != -1)
-		throw logic_error("Instance already intialized");
+    {
+        if(!servInfo)
+            throw logic_error("Instance already intialized");
+    }
 
     if(port > 65535)
         throw invalid_argument("port parameter > 65535");
@@ -36,15 +38,34 @@ void SocketInfo::initSocket(const unsigned int &port, const string &host)
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE; // use my IP
 
-    LOG4CPLUS_TRACE(logger, "Getting addrinfo for host "<<host<<" port "<<port);
-	rv = getaddrinfo((host.size() ? host.c_str() : NULL), to_string(port).c_str(), &hints, &servInfoTmp);
-    if (rv != 0)
+    if(servInfo == NULL || (servInfo && *servInfo == NULL))
     {
-        throw runtime_error(gai_strerror(rv));
+        LOG4CPLUS_TRACE(logger, "Getting address info");
+        rv = getaddrinfo((host.size() ? host.c_str() : NULL), to_string(port).c_str(), &hints, &servInfoTmp);
+        if (rv != 0)
+        {
+            throw runtime_error(gai_strerror(rv));
+        }
+    }
+    else
+    {
+        LOG4CPLUS_TRACE(logger, "Using previous address info");
+        servInfoTmp = *servInfo;
     }
 	
     for(addrInfoItem = servInfoTmp; addrInfoItem != NULL; addrInfoItem = addrInfoItem->ai_next) 
     {
+        static const bool logTrace = logger.isEnabledFor(TRACE_LOG_LEVEL);
+        if(logTrace)
+        {
+            char hostname[NI_MAXHOST];
+            int errnum = getnameinfo(addrInfoItem->ai_addr, addrInfoItem->ai_addrlen, hostname, sizeof(hostname), NULL, 0, NI_NUMERICHOST);
+            if((errnum != 0))
+                LOG4CPLUS_TRACE(logger, "getnameinfo errored out: " <<gai_strerror(errnum));
+            else
+                LOG4CPLUS_TRACE(logger, "IP to try: "<<hostname);
+        }
+        LOG4CPLUS_TRACE(logger, "Attempt to get socket");
         sockfd = socket(addrInfoItem->ai_family, addrInfoItem->ai_socktype, addrInfoItem->ai_protocol);
         if (sockfd == -1) 
         {
@@ -56,7 +77,9 @@ void SocketInfo::initSocket(const unsigned int &port, const string &host)
             case ENFILE:
                 throw runtime_error(string("Failed to get socket fd: ") + strerror(err));
             default:
+                LOG4CPLUS_TRACE(logger, "No socket there, trying next entry");
                 continue;
+
             }
         }
         else
@@ -71,11 +94,13 @@ void SocketInfo::initSocket(const unsigned int &port, const string &host)
         throw runtime_error("No address info found");
     }
 	
-
     timeout.tv_sec=15;
     timeout.tv_usec=0;
 
 	setAddrInfo((const struct sockaddr_storage *)servInfoTmp->ai_addr, servInfoTmp->ai_addrlen);
+
+    if(servInfo)
+        *servInfo = servInfoTmp->ai_next;
 }
 
 const string SocketInfo::getSocketIP() const

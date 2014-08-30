@@ -8,6 +8,7 @@
 
 #include <netdb.h>
 #include <sys/socket.h>
+#include <arpa/inet.h>
 #include <unistd.h>
 
 #include <log4cplus/logger.h>
@@ -117,7 +118,7 @@ protected:
      * \param port Port number to use with socket connection
      * \param host Host to connect to as client, or host to listen from as server
      */
-    void initSocket(const unsigned int &port, const std::string &host = "");
+    void initSocket(const unsigned int &port, const std::string &host = "", struct addrinfo **servInfo = NULL);
 
     /**
      * Set the sockaddr_storage structure to associate to this class' instance
