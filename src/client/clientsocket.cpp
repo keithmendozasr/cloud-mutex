@@ -18,19 +18,57 @@ const bool ClientSocket::initClient(const unsigned &port, const string &server)
     if(!server.length())
         throw invalid_argument("server parameter");
 
-    initSocket(port, server);
-    const struct sockaddr_storage &addr = getAddrInfo();
     bool retVal = true;
 
-    if(connect(getSocket(), (struct sockaddr *)&addr, getAddrInfoSize()))
+    try
     {
-        int err = errno;
-        char errmsg[256];
-        strerror_r(err, errmsg, 256);
-        LOG4CPLUS_ERROR(logger, "Failed to connect to server. Error message: "<<errmsg);
-        retVal = false;
-    }//connect failed
-    else
+        initSocket(port, server);
+    }
+    catch(runtime_error &e)
+    {
+        LOG4CPLUS_ERROR(logger, "Host/port resolution failed. Cause: " << e.what());
+        return false;
+    }
+
+    do
+    {
+        const struct sockaddr_storage &addr = getAddrInfo();
+
+        if(connect(getSocket(), (struct sockaddr *)&addr, getAddrInfoSize()) != 0)
+        {
+            int err = errno;
+            LOG4CPLUS_TRACE(logger, "Value of err: "<<err);
+            switch(err)
+            {
+            case ECONNREFUSED:
+            case ETIMEDOUT:
+                LOG4CPLUS_TRACE(logger, "Try next returned IP");
+                try
+                {
+                    initSocket();
+                }
+                catch(runtime_error &e)
+                {
+                    LOG4CPLUS_ERROR(logger, "Tried all resolved IP addresses.");
+                    retVal = false;
+                }
+                break;
+            default:
+                char errmsg[256];
+                strerror_r(err, errmsg, 256);
+                LOG4CPLUS_ERROR(logger, "Failed to connect to server. Error message: "<<errmsg);
+                retVal = false;
+                break;
+            }
+        }
+        else
+        {
+            LOG4CPLUS_DEBUG(logger, "Connected to server");
+            break;
+        }
+    }while(retVal);
+
+    if(retVal)
     {
         if(fcntl(getSocket(), F_SETFD, O_NONBLOCK))
         {
@@ -74,6 +112,8 @@ const bool ClientSocket::initClient(const unsigned &port, const string &server)
             }
         }//switch select()
     }//wait for connect ready
+    else
+        LOG4CPLUS_ERROR(logger, "Unable to connect to the server "<<server<<" on port "<<port);
 
     return retVal;
 } //const bool init

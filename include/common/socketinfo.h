@@ -8,6 +8,7 @@
 
 #include <netdb.h>
 #include <sys/socket.h>
+#include <arpa/inet.h>
 #include <unistd.h>
 
 #include <log4cplus/logger.h>
@@ -109,7 +110,7 @@ public:
 
 protected:
     /**
-     * Initialize a socket connection instance
+     * Initialize a socket connection instance resolving the port and host
      *
      * \throws invalid_argument if port param not valid port number
      * \throws logic_error is socket instance already created
@@ -118,6 +119,15 @@ protected:
      * \param host Host to connect to as client, or host to listen from as server
      */
     void initSocket(const unsigned int &port, const std::string &host = "");
+
+    /**
+     * Initialize a socket connection without resolving host/port
+     *
+     * \throws range_error No more available IP's to try 
+     * \throws logic_error host/port resolution has not been completed yet
+     * \throws runtime_error if unable to create socket instance
+     */
+     void initSocket();
 
     /**
      * Set the sockaddr_storage structure to associate to this class' instance
@@ -136,6 +146,9 @@ private:
     struct sockaddr_storage addrInfo;
     size_t addrInfoSize;
     int sockfd;
+
+    struct addrinfo *servInfo = nullptr;
+    struct addrinfo *nextServ = nullptr;
 
     timeval timeout;
 };
