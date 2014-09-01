@@ -18,3 +18,4 @@
 *.swp
 src/server/cmserver
 src/client/cmclient
+*.valgrind

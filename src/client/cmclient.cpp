@@ -25,7 +25,7 @@ int main(void)
     ClientSocket socket;
     try
     {
-        if(socket.initClient(9876, "localhost"))
+        if(socket.initClient(9876, "cmtest"))
         {
             LOG4CPLUS_DEBUG(logger, "Connected to server");
             socket.writeData("Hello there",strlen("Hello there"));

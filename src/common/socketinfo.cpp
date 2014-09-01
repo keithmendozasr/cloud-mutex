@@ -18,6 +18,17 @@ SocketInfo::SocketInfo() :
 	sockfd(-1)
 {}
 
+SocketInfo::~SocketInfo()
+{
+    closeSocket();
+
+    if(servInfo)
+    {
+        freeaddrinfo(servInfo);
+        servInfo = nullptr;
+    }
+};
+
 void SocketInfo::initSocket(const unsigned int &port, const string &host)
 {
 	if(sockfd != -1)
@@ -133,7 +144,7 @@ const string SocketInfo::getSocketIP() const
 			string msg("Failed to translate IP address: ");
 			throw msg;
 		}
-		buf[INET_ADDRSTRLEN] = '\0';
+		buf[INET_ADDRSTRLEN-1] = '\0';
 	}
 	else if(addrInfo.ss_family == AF_INET6)
 	{
@@ -147,7 +158,7 @@ const string SocketInfo::getSocketIP() const
 			msg += strerror(errno);
 			throw msg;
 		}
-		buf[INET6_ADDRSTRLEN] = '\0';
+		buf[INET6_ADDRSTRLEN-1] = '\0';
 	}
 	else
     {
@@ -181,7 +192,7 @@ SocketInfo::SocketInfo(const int &sockfd, const sockaddr_storage *addr, const si
 
 void SocketInfo::setAddrInfo(const sockaddr_storage *addr, const size_t &addrSize)
 {
-	memmove(&addrInfo, addr, sizeof(struct sockaddr_storage));
+	memmove(&addrInfo, addr, addrSize);
     addrInfoSize = addrSize;
 }
 

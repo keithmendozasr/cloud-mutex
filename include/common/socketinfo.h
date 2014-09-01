@@ -35,10 +35,7 @@ public:
      */
     SocketInfo(const int &sockfd, const sockaddr_storage *addr, const size_t &addrSize);
 
-    virtual ~SocketInfo()
-    {
-        closeSocket();
-    };
+    virtual ~SocketInfo();
     
     /**
      * Return the socket descriptor
