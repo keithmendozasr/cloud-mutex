@@ -83,7 +83,7 @@ void SocketInfo::initSocket()
                 LOG4CPLUS_TRACE(logger, "IP to try: "<<hostname);
         }
         LOG4CPLUS_TRACE(logger, "Attempt to get socket");
-        sockfd = socket(addrInfoItem->ai_family, addrInfoItem->ai_socktype, addrInfoItem->ai_protocol);
+        sockfd = socket(addrInfoItem->ai_family, addrInfoItem->ai_socktype | SOCK_NONBLOCK, addrInfoItem->ai_protocol);
         if (sockfd == -1) 
         {
             int err = errno;
