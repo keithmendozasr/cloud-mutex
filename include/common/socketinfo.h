@@ -81,13 +81,20 @@ public:
     {
         return addrInfoSize;
     }
-    
+
+    /**
+     * Wait for data to be available for reading
+     *
+     * \throws std::system_error Error encountered while waiting for message to arrive
+     * \throws TimeoutException when timeout reached while waiting for data to arrive
+     * \param timeout Number of seconds to wait for data. 0 for no timeout
+     */
+    void waitForReading(const unsigned int timeout = 0);
+
     /**
      * Attempt to read from client.
      *
      * \throws std::invalid_argument data parameter is null
-     * \throws std::system_error Error encountered while waiting for message to arrive
-     * \throws TimeoutException when timeout reached while waiting for data to arrive
      * \param data Buffer to place received data
      * \param dataSize Size of data
      * \return Number of bytes received
@@ -95,10 +102,17 @@ public:
     const size_t readData(char *data, const size_t &dataSize);
 
     /**
-     * Attempt to send to client
+     * Wait for socket to be ready for writing
      *
      * \throws std::system_error Error encountered while waiting for socket to be ready to send message
      * \throws TimeoutException when timeout reached while waiting for socket to be ready to send message
+     * \param timeout Number of seconds to wait for socket to be writable. 0 for no timeout
+     */
+    void waitForWriting(const unsigned int timeout = 0);
+
+    /**
+     * Attempt to send to client
+     *
      * \param msg Data to send
      * \param msgSize Size of msg
      * \return Number of bytes sent
