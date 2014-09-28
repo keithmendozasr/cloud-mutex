@@ -56,9 +56,14 @@ const bool ClientSocket::initClient(const unsigned &port, const string &server)
                         LOG4CPLUS_ERROR(logger, "Failed to connect to server. Error message: "<<errmsg);
                         retVal = false;
                     }
+                    else if(val == ECONNREFUSED)
+                    {
+                        LOG4CPLUS_TRACE(logger, "Failed to connect. Try next IP if available");
+                        close(getSocket());
+                        initSocket();
+                    }
                     else
-                        LOG4CPLUS_TRACE(logger, "Connected to server");
-                    break;
+                        break;
                 }
                 else
                 {
@@ -70,10 +75,7 @@ const bool ClientSocket::initClient(const unsigned &port, const string &server)
                 }
             }
             else
-            {
-                LOG4CPLUS_DEBUG(logger, "Connected to server");
                 break;
-            }
         }
         catch(system_error &e)
         {
@@ -97,6 +99,8 @@ const bool ClientSocket::initClient(const unsigned &port, const string &server)
 
     if(!retVal)
         LOG4CPLUS_ERROR(logger, "Unable to connect to the server "<<server<<" on port "<<port);
+    else
+        LOG4CPLUS_DEBUG(logger, "Connected to server");
 
     return retVal;
 } //const bool init
