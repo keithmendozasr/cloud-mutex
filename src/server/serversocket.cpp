@@ -74,6 +74,8 @@ void ServerSocket::handleConnection(ClientHandler &handler)
 {
     struct sockaddr_storage clientAddr;
     socklen_t sin_size = sizeof(clientAddr);
+
+    waitForReading();
     
     int new_fd = accept(getSocket(), (struct sockaddr *)&clientAddr, &sin_size);
     if (new_fd == -1)
@@ -104,3 +106,4 @@ void ServerSocket::handleConnection(ClientHandler &handler)
 }
 
 } //namespace cloudmutex
+
