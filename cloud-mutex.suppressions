@@ -1,0 +1,16 @@
+{
+    libstdc++_suppress
+    Memcheck:Cond
+    ...
+    obj:/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.17
+    ...
+}
+
+{
+    log4cplus_suppress
+    Memcheck:Param
+    write(buf)
+    ...
+    obj:/usr/lib/liblog4cplus-1.0.so.4.0.0
+    ...
+}
