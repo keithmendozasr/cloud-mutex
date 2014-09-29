@@ -7,7 +7,7 @@
 #include <log4cplus/configurator.h>
 #include <log4cplus/helpers/loglog.h>
 
-#include "client/clientsocket.h"
+#include "clientsocket.h"
 
 using namespace std;
 using namespace log4cplus;

@@ -6,9 +6,10 @@
 #include <fcntl.h>
 #include <sys/select.h>
 
-#include <common/timeoutexception.h>
-#include <client/clientsocket.h>
 #include <log4cplus/loggingmacros.h>
+
+#include "common/timeoutexception.h"
+#include "clientsocket.h"
 using namespace std;
 namespace cloudmutex
 {

@@ -10,8 +10,8 @@
 #include <log4cplus/configurator.h>
 #include <log4cplus/helpers/loglog.h>
 
-#include "server/serversocket.h"
-#include "server/clienthandler.h"
+#include "serversocket.h"
+#include "clienthandler.h"
 
 using namespace std;
 using namespace log4cplus;

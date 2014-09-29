@@ -1,7 +1,6 @@
-.PHONY: cmserver
+.PHONY: all debug
 
-OBJS=../common/socketinfo.o \
-	clientsocket.o \
+OBJS = clientsocket.o \
     cmclient.o
 
 DEPS=$(patsubst %.o, %.d, $(OBJS))
@@ -12,11 +11,8 @@ all: cmclient
 debug: CXXFLAGS+=-ggdb3 -O0
 debug: cmclient
 
-analyze: CXXFLAGS+=--analyze
-analyze: $(DEPS) $(OBJS)
-
-cmclient: $(DEPS) $(OBJS)
-	$(CXX) $(OBJS) -o cmclient -llog4cplus
+cmclient: $(DEPS) $(OBJS) $(COMMON_OBJS)
+	$(CXX) $(OBJS) $(COMMON_OBJS) -o cmclient -llog4cplus
 
 %.d: %.cpp
 	$(CXX) $(CXXFLAGS) -MM -MF $@ $<

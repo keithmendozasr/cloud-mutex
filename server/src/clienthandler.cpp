@@ -6,7 +6,7 @@
 #include <log4cplus/logger.h>
 #include <log4cplus/loggingmacros.h>
 
-#include "server/clienthandler.h"
+#include "clienthandler.h"
 #include "common/timeoutexception.h"
 
 using namespace std;

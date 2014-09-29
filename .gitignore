@@ -16,6 +16,6 @@
 # Other stuff
 .DS_Store
 *.swp
-src/server/cmserver
-src/client/cmclient
+server/src/cmserver
+client/src/cmclient
 *.valgrind

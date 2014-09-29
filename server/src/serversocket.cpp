@@ -6,8 +6,8 @@
 
 #include <log4cplus/loggingmacros.h>
 
-#include "server/serversocket.h"
-#include "server/clienthandler.h"
+#include "serversocket.h"
+#include "clienthandler.h"
 
 using namespace std;
 

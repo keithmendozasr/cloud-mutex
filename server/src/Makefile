@@ -1,7 +1,6 @@
-.PHONY: cmserver
+.PHONY: all debug
 
-OBJS=../common/socketinfo.o \
-	serversocket.o \
+OBJS=serversocket.o \
 	clienthandler.o \
 	cmserver.o
 
@@ -13,8 +12,11 @@ all: cmserver
 debug: CXXFLAGS+=-ggdb3 -O0
 debug: cmserver
 
-cmserver: $(DEPS) $(OBJS)
-	$(CXX) $(OBJS) -o cmserver -llog4cplus
+cmserver: $(DEPS) $(OBJS) $(COMMON_OBJS)
+	$(CXX) $(OBJS) $(COMMON_OBJS) -o cmserver -llog4cplus
+
+$(COMMON_OBJS):
+	make -C $(COMMON_DIR) $(MAKECMDGOALS)
 
 %.d: %.cpp
 	$(CXX) $(CXXFLAGS) -MM -MF $@ $<
