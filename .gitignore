@@ -1,5 +1,12 @@
 # Compiled Object files
 *.o
+*.in
+*.m4
+*.cache
+configure
+depcomp
+install-sh
+missing
 
 # Other stuff
 .DS_Store
