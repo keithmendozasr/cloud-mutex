@@ -61,6 +61,6 @@ private:
     
 }; //class ServerSocket
 
-}; //namespace cloudmutex
+} //namespace cloudmutex
 
 #endif

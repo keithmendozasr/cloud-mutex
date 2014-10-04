@@ -30,13 +30,13 @@ void ClientHandler::handle(const SocketInfo &sockParam)
     {
         try
         {
-            size_t bufSize = 256;
+            const size_t bufSize = 256;
             char buf[bufSize];
             msg.clear();
 
-            bufSize = socket.readData(buf, bufSize);
-            LOG4CPLUS_TRACE(logger, "Read "<<bufSize<<" data");
-            msg.append(buf, bufSize);
+            size_t readLen = socket.readData(buf, bufSize);
+            LOG4CPLUS_TRACE(logger, "Read "<<readLen<<" data");
+            msg.append(buf, readLen);
 
             if(msg == "end")
             {
