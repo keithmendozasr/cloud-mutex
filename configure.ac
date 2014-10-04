@@ -31,7 +31,6 @@ AC_FUNC_STRERROR_R
 AC_CHECK_FUNCS([memmove memset select socket strerror])
 
 AC_CONFIG_FILES([Makefile
-                 client/src/Makefile])
-#                 common/src/Makefile
-#                 server/src/Makefile])
+                 client/src/Makefile
+                 server/src/Makefile])
 AC_OUTPUT
