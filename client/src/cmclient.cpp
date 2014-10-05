@@ -8,6 +8,7 @@
 #include <log4cplus/helpers/loglog.h>
 
 #include "client/cmclient.h"
+#include "common/msgtypes.h"
 
 using namespace std;
 using namespace log4cplus;
@@ -28,12 +29,6 @@ const bool CmClient::init()
         if(socket.initClient(9876, "localhost"))
         {
             LOG4CPLUS_DEBUG(logger, "Connected to server");
-            socket.writeData("Hello there",strlen("Hello there"));
-            sleep(3);
-            char buf[256];
-            int r = socket.readData(buf, 255);
-            buf[r]='\0';
-            LOG4CPLUS_INFO(logger, buf);
 
             retVal = true;
         }
@@ -46,6 +41,19 @@ const bool CmClient::init()
     }
     
     return std::move(retVal);
+}
+
+const bool CmClient::lock()
+{
+    LOG4CPLUS_TRACE(logger, "Sending lock message");
+    bool response = false;
+    Request request = Request::LOCK;
+    socket.writeData(reinterpret_cast<const char *>(&request), sizeof(request));
+    size_t readLen = socket.readData(reinterpret_cast<char *>(&response), sizeof(response));
+    if(readLen != sizeof(response))
+        LOG4CPLUS_FATAL(logger, "Failed to retrieve response");
+    LOG4CPLUS_TRACE(logger, "Value of response: "<<response);
+    return response;
 }
 
 } //namespace cloudmutex

@@ -24,7 +24,13 @@ int main(void)
 
     CmClient client("tester");
     if(client.init())
+    {
         LOG4CPLUS_INFO(logger, "Initialization complete");
+        if(client.lock())
+            LOG4CPLUS_INFO(logger, "Lock acquired");
+        else
+            LOG4CPLUS_ERROR(logger, "Failed to acquire lock");
+    }
     else
         LOG4CPLUS_INFO(logger, "Initialization failed");
         

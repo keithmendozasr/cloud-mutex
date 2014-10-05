@@ -14,6 +14,7 @@ class CmClient
 public:
     CmClient(const std::string &lockName);
     const bool init();
+    const bool lock();
 
 private:
     CmClient(){};

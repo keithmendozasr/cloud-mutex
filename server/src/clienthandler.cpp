@@ -8,6 +8,7 @@
 
 #include "clienthandler.h"
 #include "common/timeoutexception.h"
+#include "common/msgtypes.h"
 
 using namespace std;
 using namespace log4cplus;
@@ -24,28 +25,22 @@ void ClientHandler::handle(const SocketInfo &sockParam)
     string ip = socket.getSocketIP();
     LOG4CPLUS_INFO(logger, "Handle client " << ip);
 
-    string msg;
     keepRunning = true;
     while(keepRunning)
     {
         try
         {
-            const size_t bufSize = 256;
-            char buf[bufSize];
-            msg.clear();
-
-            size_t readLen = socket.readData(buf, bufSize);
+            Request r;
+            size_t readLen = socket.readData(reinterpret_cast<char *>(&r), sizeof(r));
             LOG4CPLUS_TRACE(logger, "Read "<<readLen<<" data");
-            msg.append(buf, readLen);
-
-            if(msg == "end")
+            switch(r)
             {
-                LOG4CPLUS_INFO(logger, "Client logging out");
-                shutdown(socket.getSocket(), SHUT_RDWR);
+            case Request::LOCK:
+                LOG4CPLUS_INFO(logger, "Lock requested");
                 break;
+            default:
+                LOG4CPLUS_WARN(logger, "Received unexpected code "<<(int)r);
             }
-            else
-                LOG4CPLUS_DEBUG(logger, "Message from client: >>>"<<msg<<"<<<");
         }
         catch(TimeoutException &e)
         {
@@ -60,23 +55,17 @@ void ClientHandler::handle(const SocketInfo &sockParam)
 
         try
         {
-            msg = string("\nEcho back: ") + msg;
-            const char *t = msg.c_str();
-            int written=0;
-            const int &maxLen = msg.length()+1;
-            do
+            const bool pass = true;
+            const size_t maxLen = sizeof(pass);
+            LOG4CPLUS_TRACE(logger, "Value of maxLen: "<<maxLen);
+            int len = socket.writeData(reinterpret_cast<const char *>(&pass), sizeof(pass));
+            if(!len)
             {
-                int len = socket.writeData(t+written, maxLen-written);
-                if(!len)
-                {
-                    LOG4CPLUS_WARN(logger, "Failed to send data");
-                    break;
-                }
-                
-                written+=len;
-                LOG4CPLUS_TRACE(logger, "Written "<<len<<". Amount left: "<<(maxLen-written));
-            }while(written <maxLen);
-            LOG4CPLUS_DEBUG(logger, "Echo complete");
+                LOG4CPLUS_WARN(logger, "Failed to send data");
+                break;
+            }
+            else
+                LOG4CPLUS_DEBUG(logger, "Response sent");
         }
         catch(TimeoutException &e)
         {
@@ -101,6 +90,5 @@ void ClientHandler::handle(const SocketInfo &sockParam)
     const_cast<SocketInfo &>(socket).closeSocket();
     LOG4CPLUS_DEBUG(logger, __PRETTY_FUNCTION__<<" exiting");
 } //void ClientHandler::handle(const SocketInfo &socket)
-
 
 } //namespace cloudmutex
