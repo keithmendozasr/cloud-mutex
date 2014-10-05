@@ -7,22 +7,22 @@
 #include <log4cplus/configurator.h>
 #include <log4cplus/helpers/loglog.h>
 
-#include "clientsocket.h"
+#include "client/cmclient.h"
 
 using namespace std;
 using namespace log4cplus;
-using namespace cloudmutex;
 
-int main(void)
+namespace cloudmutex
 {
-    //TODO: Make this configurable
-    PropertyConfigurator::doConfigure("/etc/cloud-mutex/clientlog.properties");
-    helpers::LogLog::getLogLog()->setInternalDebugging(true);
-    Logger logger = Logger::getRoot();
-    
-    LOG4CPLUS_DEBUG(logger, "Staring client");
-    
-    ClientSocket socket;
+
+CmClient::CmClient(const std::string &lockName) : lockName(lockName), logger(Logger::getInstance("CmClient"))
+{}
+
+const bool CmClient::init()
+{
+    Logger logger = Logger::getInstance(__PRETTY_FUNCTION__);
+    LOG4CPLUS_TRACE(logger, "Initializing "<<lockName<<" lock");
+    bool retVal=false;
     try
     {
         if(socket.initClient(9876, "localhost"))
@@ -34,6 +34,8 @@ int main(void)
             int r = socket.readData(buf, 255);
             buf[r]='\0';
             LOG4CPLUS_INFO(logger, buf);
+
+            retVal = true;
         }
         else
             LOG4CPLUS_FATAL(logger, "Failed to connect to server");
@@ -41,8 +43,9 @@ int main(void)
     catch(exception &e)
     {
         LOG4CPLUS_FATAL(logger, "Failed to initialize Mutex. Error message: "<<e.what());
-        return 1;
     }
     
-    return 0;
+    return std::move(retVal);
 }
+
+} //namespace cloudmutex
