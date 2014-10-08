@@ -1,11 +1,11 @@
 AM_CPPFLAGS = -I$(top_builddir)/include -I ../include
-bin_PROGRAMS = cmclient
+lib_LTLIBRARIES = libcloudmutex.la
 
 BUILT_SOURCES = $(top_builddir)/common/src/socketinfo.cpp
 
-cmclient_SOURCES=cmclient_test.cpp \
-    cmclient.cpp \
+libcloudmutex_la_SOURCES=cmclient.cpp \
     clientsocket.cpp \
     $(top_builddir)/common/src/socketinfo.cpp
 
-cmclient_LDADD = -llog4cplus
+libcloudmutex_la_LIBADD =-llog4cplus
+libcloudmutex_la_LDFLAGS= -version-info 0:0:0
