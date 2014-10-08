@@ -27,6 +27,11 @@ SocketInfo::~SocketInfo()
         freeaddrinfo(servInfo);
         servInfo = nullptr;
     }
+
+    if(sockfd != -1)
+    {
+        close(sockfd);
+    }
 }
 
 void SocketInfo::initSocket(const unsigned int &port, const string &host)
