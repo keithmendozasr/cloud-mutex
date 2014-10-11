@@ -11,6 +11,11 @@ Makefile
 config.*
 *.deps
 stamp-h1
+*.libs
+*.lo
+*.la
+libtool
+ltmain.sh
 
 # Other stuff
 .DS_Store
