@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I$(top_builddir)/include -I ../include
+AM_CXXFLAGS+=$(BASE_CXXFLAGS)
 bin_PROGRAMS = cmserver
 
 BUILT_SOURCES = $(top_builddir)/common/src/socketinfo.cpp

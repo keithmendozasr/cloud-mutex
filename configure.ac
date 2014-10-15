@@ -15,6 +15,9 @@ AC_PROG_MAKE_SET
 
 # Checks for libraries.
 AC_CHECK_LIB([log4cplus], [Logger::getRoot])
+AC_SUBST([BASE_CXXFLAGS], ['-I$(top_builddir)/include -I../include -Wall -Werror -pedantic -std=c++11'])
+AC_SUBST([AM_CXXFLAGS])
+AC_SUBST([LIBLOG4CPP], [-llog4cplus])
 
 # Checks for header files.
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h sys/socket.h unistd.h])

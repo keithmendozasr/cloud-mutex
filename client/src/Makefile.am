@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I$(top_builddir)/include -I ../include
+AM_CXXFLAGS += $(BASE_CXXFLAGS)
 lib_LTLIBRARIES = libcloudmutex.la
 
 BUILT_SOURCES = $(top_builddir)/common/src/socketinfo.cpp
