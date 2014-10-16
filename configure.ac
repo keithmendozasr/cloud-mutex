@@ -27,6 +27,22 @@ AC_TYPE_SIZE_T
 AC_FUNC_STRERROR_R
 AC_CHECK_FUNCS([memmove memset select socket strerror])
 
+# Check for gtest build version
+
+AC_ARG_WITH(
+    [gtest],
+    [AS_HELP_STRING([--with-gtest=<path to google test>],
+        [Set path to google test and build for unit testing]
+    )],
+    [AS_IF([test "x$withval" != "xyes"],
+        [
+            AC_SUBST([GTEST_DIR], ["$withval"])
+            AC_SUBST([GTEST_FLAGS], ["-I$withval/include -I$withval -pthread -DGTEST_ENABLED"])
+        ],
+        AC_MSG_FAILURE([Path to gtest library not provided in --with-gtest])
+    )]
+)
+
 AC_SUBST([BASE_CXXFLAGS], ['-I$(top_builddir)/include -I../include -Wall -Werror -pedantic -std=c++11'])
 AC_SUBST([AM_CXXFLAGS])
 AC_SUBST([LIBLOG4CPP], [-llog4cplus])
@@ -34,5 +50,6 @@ AC_SUBST([LIBLOG4CPP], [-llog4cplus])
 AC_CONFIG_FILES([Makefile
                  client/src/Makefile
                  server/src/Makefile
-                 test/integration/Makefile])
+                 test/integration/Makefile
+                 test/unittest/Makefile])
 AC_OUTPUT
