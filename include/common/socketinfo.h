@@ -27,6 +27,7 @@ class SocketInfo
 {
     #ifdef GTEST_ENABLED
     FRIEND_TEST(SocketInfoTest, getSocket);
+    FRIEND_TEST(SocketInfoTest, getSocketIP);
     #endif
 
 public:
