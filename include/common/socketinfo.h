@@ -13,6 +13,10 @@
 
 #include <log4cplus/logger.h>
 
+#ifdef GTEST_ENABLED
+#include "gtest/gtest_prod.h"
+#endif
+
 namespace cloudmutex
 {
 
@@ -21,6 +25,10 @@ namespace cloudmutex
  */
 class SocketInfo
 {
+    #ifdef GTEST_ENABLED
+    FRIEND_TEST(SocketInfoTest, getSocket);
+    #endif
+
 public:
     /**
      * Default constructor

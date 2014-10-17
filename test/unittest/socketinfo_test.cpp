@@ -9,6 +9,11 @@ TEST(SocketInfoTest, getSocket)
 {
     SocketInfo i;
     ASSERT_THROW(i.getSocket(), std::logic_error);
+
+    i.sockfd=1;
+    ASSERT_NO_THROW(
+        ASSERT_EQ(1, i.getSocket())
+    );
 }
 
 }
