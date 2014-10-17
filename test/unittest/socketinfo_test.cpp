@@ -37,8 +37,10 @@ TEST(SocketInfoTest, getSocket)
     ASSERT_THROW(i.getSocket(), std::logic_error);
 
     i.sockfd=500;
-    ASSERT_NO_THROW(i.getSocket());
-    ASSERT_EQ(500, i.getSocket());
+    ASSERT_NO_THROW({
+        ASSERT_EQ(500, i.getSocket());
+    });
+    i.sockfd = -1;
 }
 
 TEST(SocketInfoTest, getSocketIP)
@@ -50,10 +52,10 @@ TEST(SocketInfoTest, getSocketIP)
     getAddrInfoInstance(&tmp);
     i.sockfd = 500;
     i.setAddrInfo((const struct sockaddr_storage *)tmp->ai_addr, tmp->ai_addrlen);
-    std::string rslt;
-    ASSERT_NO_THROW(i.getSocketIP());
-    ASSERT_STREQ("::1", i.getSocketIP().c_str());
-    i.sockfd = 500;
+    ASSERT_NO_THROW({
+        ASSERT_EQ("::1", i.getSocketIP());
+    });
+    i.sockfd = -1;
 }
 
 } //namespace cloudmutex
