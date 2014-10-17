@@ -16,7 +16,6 @@ stamp-h1
 *.la
 libtool
 ltmain.sh
-cmclient
 
 # Other stuff
 .DS_Store
