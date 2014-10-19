@@ -32,6 +32,7 @@ class SocketInfo
     FRIEND_TEST(SocketInfoTest, getSocketIPV4);
     FRIEND_TEST(SocketInfoTest, getSocketIPV6);
     FRIEND_TEST(SocketInfoTest, waitForReading);
+    FRIEND_TEST(SocketInfoTest, readData);
     #endif
 
 public:
