@@ -10,4 +10,4 @@ socketinfo_SOURCES=$(GTEST_DIR)/src/gtest-all.cc \
 
 socketinfo_CXXFLAGS=$(AM_CXXFLAGS) -I$(top_builddir)/include/common
 LDADD=-llog4cplus -L$(GTEST_DIR)/lib -lgtest_main
-AM_LDFLAGS=-static
+AM_LDFLAGS=-static -Xlinker "--wrap=select"

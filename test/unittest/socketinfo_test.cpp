@@ -2,7 +2,40 @@
 #include <stdexcept>
 #include <string>
 
+#include <log4cplus/nullappender.h>
+
 #include "socketinfo.h"
+#include "timeoutexception.h"
+
+using namespace log4cplus;
+
+extern "C"
+{
+    int __wrap_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
+} //extern "C"
+
+enum SELECT_MODE { TIMEOUT, FAIL, READY };
+enum SELECT_MODE selectMode;
+int __wrap_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exeptfds, struct timeval *timeout)
+{
+    FD_CLR(500, readfds);
+
+    switch(selectMode)
+    {
+    case TIMEOUT:
+        return 0;
+        break;
+    case FAIL:
+        errno = EBADF;
+        return -1;
+        break;
+    default:
+        FD_SET(500, readfds);
+        break;
+    }
+
+    return 1;
+}
 
 namespace cloudmutex
 {
@@ -19,7 +52,19 @@ void getAddrInfoInstance(struct addrinfo **tmp, const int &ai_family = AF_UNSPEC
     ASSERT_EQ(0, getaddrinfo("localhost", "9876", &hints, tmp));
 }
 
-TEST(SocketInfoTest, paramConstructor)
+class SocketInfoTest : public ::testing::Test
+{
+protected:
+    static void SetUpTestCase()
+    {
+        //So the log4cplus doesn't complain
+        Logger logger = Logger::getRoot();
+        logger.removeAllAppenders();
+        logger.addAppender(SharedAppenderPtr(new NullAppender));
+    }
+};
+
+TEST_F(SocketInfoTest, paramConstructor)
 {
     ASSERT_THROW(SocketInfo(2, NULL, 0), std::invalid_argument);
     ASSERT_THROW(SocketInfo(3, NULL, 0), std::invalid_argument);
@@ -31,7 +76,7 @@ TEST(SocketInfoTest, paramConstructor)
     freeaddrinfo(servInfo);
 }
 
-TEST(SocketInfoTest, getSocket)
+TEST_F(SocketInfoTest, getSocket)
 {
     SocketInfo i;
     ASSERT_THROW(i.getSocket(), std::logic_error);
@@ -43,7 +88,7 @@ TEST(SocketInfoTest, getSocket)
     i.sockfd = -1;
 }
 
-TEST(SocketInfoTest, getSocketIP)
+TEST_F(SocketInfoTest, getSocketIP)
 {
     SocketInfo i;
     ASSERT_THROW(i.getSocketIP(), std::logic_error);
@@ -85,6 +130,24 @@ TEST(SocketInfoTest, getSocketIP)
             ASSERT_STREQ(buf.get(), retVal.c_str()); //i.getSocketIP().c_str());
         });
     }
+}
+
+TEST_F(SocketInfoTest, waitForReading)
+{
+
+    SocketInfo i;
+    i.sockfd=500;
+
+    selectMode = TIMEOUT;
+    ASSERT_THROW(i.waitForReading(), TimeoutException);
+
+    selectMode = FAIL;
+    ASSERT_THROW(i.waitForReading(), std::system_error);
+
+    selectMode = READY;
+    ASSERT_NO_THROW(i.waitForReading());
+
+    i.sockfd = -1;
 }
 
 } //namespace cloudmutex
