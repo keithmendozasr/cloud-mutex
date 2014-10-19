@@ -249,9 +249,7 @@ const size_t SocketInfo::readData(char *data, const size_t &dataSize)
     if(retVal < 0)
     {
         int err = errno;
-        char errmsg[256];
-        strerror_r(err, errmsg, 256);
-        throw system_error(err, generic_category(), errmsg);
+        throw system_error(err, generic_category(), "Error reading from socket");
     }
     else if(retVal == 0)
         throw system_error(EPIPE, generic_category());
