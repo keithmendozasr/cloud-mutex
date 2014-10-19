@@ -7,12 +7,12 @@
 namespace cloudmutex
 {
 
-void getAddrInfoInstance(struct addrinfo **tmp)
+void getAddrInfoInstance(struct addrinfo **tmp, const int &ai_family = AF_UNSPEC)
 {
 
     struct addrinfo hints;    
     memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_UNSPEC;
+    hints.ai_family = ai_family;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE; // use my IP
 
@@ -47,15 +47,44 @@ TEST(SocketInfoTest, getSocketIP)
 {
     SocketInfo i;
     ASSERT_THROW(i.getSocketIP(), std::logic_error);
-
-    struct addrinfo *tmp = nullptr;
-    getAddrInfoInstance(&tmp);
-    i.sockfd = 500;
-    i.setAddrInfo((const struct sockaddr_storage *)tmp->ai_addr, tmp->ai_addrlen);
-    ASSERT_NO_THROW({
-        ASSERT_EQ("::1", i.getSocketIP());
-    });
     i.sockfd = -1;
+
+    {
+        SocketInfo i;
+        i.sockfd = 500;
+        struct addrinfo *tmp = nullptr;
+        getAddrInfoInstance(&tmp, AF_INET);
+        memmove(&(i.addrInfo), tmp->ai_addr, tmp->ai_addrlen);
+
+	    std::unique_ptr<char> buf(new char[INET_ADDRSTRLEN]);
+		struct sockaddr_in *t = (struct sockaddr_in *)tmp->ai_addr;
+		ASSERT_FALSE(inet_ntop(AF_INET, &(t->sin_addr), buf.get(), INET_ADDRSTRLEN) == nullptr);
+		buf.get()[INET_ADDRSTRLEN-1] = '\0';
+        freeaddrinfo(tmp);
+        std::string retVal = i.getSocketIP();
+        i.sockfd = -1;
+        ASSERT_NO_THROW({
+            ASSERT_STREQ(buf.get(), retVal.c_str());
+        });
+	}
+    
+    {
+        SocketInfo i;
+        i.sockfd = 500;
+        struct addrinfo *tmp = nullptr;
+        getAddrInfoInstance(&tmp, AF_INET6);
+        memmove(&(i.addrInfo), tmp->ai_addr, tmp->ai_addrlen);
+
+		std::unique_ptr<char> buf = std::unique_ptr<char>(new char[INET6_ADDRSTRLEN]);
+		struct sockaddr_in6 *t = (struct sockaddr_in6 *)tmp->ai_addr;
+		ASSERT_FALSE(inet_ntop(AF_INET6, &(t->sin6_addr), buf.get(), INET6_ADDRSTRLEN) == nullptr);
+        freeaddrinfo(tmp);
+        std::string retVal = i.getSocketIP();
+        i.sockfd=-1;
+        ASSERT_NO_THROW({
+            ASSERT_STREQ(buf.get(), retVal.c_str()); //i.getSocketIP().c_str());
+        });
+    }
 }
 
 } //namespace cloudmutex
