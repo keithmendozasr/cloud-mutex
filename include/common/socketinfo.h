@@ -26,8 +26,11 @@ namespace cloudmutex
 class SocketInfo
 {
     #ifdef GTEST_ENABLED
-    FRIEND_TEST(SocketInfoTest, getSocket);
-    FRIEND_TEST(SocketInfoTest, getSocketIP);
+    friend class SocketInfoTest;
+
+    FRIEND_TEST(SocketInfoTest, getSocketNotReady);
+    FRIEND_TEST(SocketInfoTest, getSocketIPV4);
+    FRIEND_TEST(SocketInfoTest, getSocketIPV6);
     FRIEND_TEST(SocketInfoTest, waitForReading);
     #endif
 
