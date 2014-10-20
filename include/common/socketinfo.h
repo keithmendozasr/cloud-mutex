@@ -27,20 +27,6 @@ class SocketInfo
 {
     #ifdef GTEST_ENABLED
     friend class SocketInfoTest;
-
-    FRIEND_TEST(SocketInfoTestgetSocket, SocketReady);
-
-    FRIEND_TEST(SocketInfoTestgetSocketIP, V4);
-    FRIEND_TEST(SocketInfoTestgetSocketIP, V6);
-
-    FRIEND_TEST(SocketInfoTestwaitForReading, Timeout);
-    FRIEND_TEST(SocketInfoTestwaitForReading, Fail);
-    FRIEND_TEST(SocketInfoTestwaitForReading, Ready);
-
-    FRIEND_TEST(SocketInfoTestreadData, Failed);
-    FRIEND_TEST(SocketInfoTestreadData, Timeout);
-    FRIEND_TEST(SocketInfoTestreadData, Disconnect);
-    FRIEND_TEST(SocketInfoTestreadData, GoodRead);
     #endif
 
 public:

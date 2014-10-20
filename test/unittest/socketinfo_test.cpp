@@ -62,18 +62,6 @@ ssize_t __wrap_read(int fd, void *buf, size_t count)
 namespace cloudmutex
 {
 
-void getAddrInfoInstance(struct addrinfo **tmp, const int &ai_family = AF_UNSPEC)
-{
-
-    struct addrinfo hints;    
-    memset(&hints, 0, sizeof hints);
-    hints.ai_family = ai_family;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags = AI_PASSIVE; // use my IP
-
-    ASSERT_EQ(0, getaddrinfo("localhost", "9876", &hints, tmp));
-}
-
 class SocketInfoTest : public ::testing::Test
 {
 protected:
@@ -97,8 +85,28 @@ protected:
         }
     }
         
+    void getAddrInfoInstance(const int &ai_family = AF_UNSPEC, const bool &loadOnaddrInfo = false)
+    {
+        struct addrinfo hints;    
+        memset(&hints, 0, sizeof hints);
+        hints.ai_family = ai_family;
+        hints.ai_socktype = SOCK_STREAM;
+        hints.ai_flags = AI_PASSIVE; // use my IP
+
+        ASSERT_EQ(0, getaddrinfo("localhost", "9876", &hints, &servInfo));
+
+        if(loadOnaddrInfo)
+            memmove(&(i.addrInfo), servInfo->ai_addr, servInfo->ai_addrlen);
+    }
+
+    void seedSockFd()
+    {
+        i.sockfd = sockfdSeed;
+    }
+
     SocketInfo i;
     struct addrinfo *servInfo = nullptr;
+    const unsigned int sockfdSeed = 500;
 };
 
 typedef SocketInfoTest SocketInfoTestparamConstructor;
@@ -116,7 +124,7 @@ TEST_F(SocketInfoTestparamConstructor, FailaddrinfoParam)
 TEST_F(SocketInfoTestparamConstructor, goodParams)
 {
     SCOPED_TRACE("paramConstructor");
-    getAddrInfoInstance(&servInfo);
+    getAddrInfoInstance();
     ASSERT_NO_THROW(SocketInfo(4, (const struct sockaddr_storage *)servInfo->ai_addr, servInfo->ai_addrlen));
 }
 
@@ -129,7 +137,7 @@ TEST_F(SocketInfoTestgetSocket, NotReady)
 
 TEST_F(SocketInfoTestgetSocket, SocketReady)
 {
-    i.sockfd = 500;
+    seedSockFd();
     ASSERT_NO_THROW({
         ASSERT_EQ(500, i.getSocket());
     });
@@ -145,9 +153,8 @@ TEST_F(SocketInfoTestgetSocketIP, NotReady)
 
 TEST_F(SocketInfoTestgetSocketIP, V4)
 {
-    i.sockfd = 500;
-    getAddrInfoInstance(&servInfo, AF_INET);
-    memmove(&(i.addrInfo), servInfo->ai_addr, servInfo->ai_addrlen);
+    seedSockFd();
+    getAddrInfoInstance(AF_INET, true);
 
     std::unique_ptr<char[]> buf(new char[INET_ADDRSTRLEN]);
     struct sockaddr_in *t = (struct sockaddr_in *)servInfo->ai_addr;
@@ -160,9 +167,8 @@ TEST_F(SocketInfoTestgetSocketIP, V4)
 
 TEST_F(SocketInfoTestgetSocketIP, V6)
 {
-    i.sockfd =500;
-    getAddrInfoInstance(&servInfo, AF_INET6);
-    memmove(&(i.addrInfo), servInfo->ai_addr, servInfo->ai_addrlen);
+    seedSockFd();
+    getAddrInfoInstance(AF_INET6, true);
 
     std::unique_ptr<char[]> buf(new char[INET6_ADDRSTRLEN]);
     struct sockaddr_in6 *t = (struct sockaddr_in6 *)servInfo->ai_addr;
