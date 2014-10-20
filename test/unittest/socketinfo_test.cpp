@@ -18,11 +18,13 @@ extern "C"
     ssize_t __wrap_read(int fd, void *buf, size_t count);
 } //extern "C"
 
+const unsigned int sockfdSeed = 500;
+
 enum class SELECT_MODE { TIMEOUT, FAIL, READY };
 SELECT_MODE selectMode;
 int __wrap_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exeptfds, struct timeval *timeout)
 {
-    FD_CLR(500, readfds);
+    FD_CLR(sockfdSeed, readfds);
 
     switch(selectMode)
     {
@@ -34,7 +36,7 @@ int __wrap_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exeptfds,
         return -1;
         break;
     default:
-        FD_SET(500, readfds);
+        FD_SET(sockfdSeed, readfds);
         break;
     }
 
@@ -106,7 +108,6 @@ protected:
 
     SocketInfo i;
     struct addrinfo *servInfo = nullptr;
-    const unsigned int sockfdSeed = 500;
 };
 
 typedef SocketInfoTest SocketInfoTestparamConstructor;
