@@ -1,4 +1,5 @@
 #include <cerrno>
+
 #include "gtest/gtest.h"
 #include <stdexcept>
 #include <string>
@@ -84,14 +85,11 @@ protected:
         logger.setLogLevel(OFF_LOG_LEVEL);
     }
 
-    virtual void SetUp()
-    {
-        i.sockfd = 500;
-    }
-
     virtual void TearDown()
     {
-        i.sockfd = -1;
+        if(i.sockfd != -1)
+            i.sockfd = -1;
+
         if(servInfo != nullptr)
         {
             freeaddrinfo(servInfo);
@@ -103,44 +101,51 @@ protected:
     struct addrinfo *servInfo = nullptr;
 };
 
-TEST_F(SocketInfoTest, paramConstructorFailFDParam)
+typedef SocketInfoTest SocketInfoTestparamConstructor;
+
+TEST_F(SocketInfoTestparamConstructor, FailFDParam)
 {
     ASSERT_THROW(SocketInfo(2, NULL, 0), std::invalid_argument);
 }
 
-TEST_F(SocketInfoTest, paramConstructorFailaddrinfoParam)
+TEST_F(SocketInfoTestparamConstructor, FailaddrinfoParam)
 {
     ASSERT_THROW(SocketInfo(3, NULL, 0), std::invalid_argument);
 }
 
-TEST_F(SocketInfoTest, paramConstructor)
+TEST_F(SocketInfoTestparamConstructor, goodParams)
 {
     SCOPED_TRACE("paramConstructor");
     getAddrInfoInstance(&servInfo);
     ASSERT_NO_THROW(SocketInfo(4, (const struct sockaddr_storage *)servInfo->ai_addr, servInfo->ai_addrlen));
 }
 
-TEST_F(SocketInfoTest, getSocketNotReady)
+typedef SocketInfoTest SocketInfoTestgetSocket;
+
+TEST_F(SocketInfoTestgetSocket, NotReady)
 {
-    i.sockfd = -1;
     ASSERT_THROW(i.getSocket(), std::logic_error);
 }
 
-TEST_F(SocketInfoTest, getSocket)
+TEST_F(SocketInfoTestgetSocket, SocketReady)
 {
+    i.sockfd = 500;
     ASSERT_NO_THROW({
         ASSERT_EQ(500, i.getSocket());
     });
 }
 
-TEST_F(SocketInfoTest, getSocketIPNotReady)
+typedef SocketInfoTest SocketInfoTestgetSocketIP;
+
+TEST_F(SocketInfoTestgetSocketIP, NotReady)
 {
     SocketInfo i;
     ASSERT_THROW(i.getSocketIP(), std::logic_error);
 }
 
-TEST_F(SocketInfoTest, getSocketIPV4)
+TEST_F(SocketInfoTestgetSocketIP, V4)
 {
+    i.sockfd = 500;
     getAddrInfoInstance(&servInfo, AF_INET);
     memmove(&(i.addrInfo), servInfo->ai_addr, servInfo->ai_addrlen);
 
@@ -153,8 +158,9 @@ TEST_F(SocketInfoTest, getSocketIPV4)
     });
 }
 
-TEST_F(SocketInfoTest, getSocketIPV6)
+TEST_F(SocketInfoTestgetSocketIP, V6)
 {
+    i.sockfd =500;
     getAddrInfoInstance(&servInfo, AF_INET6);
     memmove(&(i.addrInfo), servInfo->ai_addr, servInfo->ai_addrlen);
 
@@ -166,40 +172,44 @@ TEST_F(SocketInfoTest, getSocketIPV6)
     });
 }
 
-TEST_F(SocketInfoTest, waitForReadingTimeout)
+typedef SocketInfoTest SocketInfoTestwaitForReading;
+
+TEST_F(SocketInfoTestwaitForReading, Timeout)
 {
     selectMode = SELECT_MODE::TIMEOUT;
     ASSERT_THROW(i.waitForReading(), TimeoutException);
 }
 
-TEST_F(SocketInfoTest, waitForReadingFail)
+TEST_F(SocketInfoTestwaitForReading, Fail)
 {
     selectMode = SELECT_MODE::FAIL;
     ASSERT_THROW(i.waitForReading(), std::system_error);
 
 }
 
-TEST_F(SocketInfoTest, waitForReadingReady)
+TEST_F(SocketInfoTestwaitForReading, Ready)
 {
     selectMode = SELECT_MODE::READY;
     ASSERT_NO_THROW(i.waitForReading());
 }
 
-TEST_F(SocketInfoTest, readDataFailed)
+typedef SocketInfoTest SocketInfoTestreadData;
+
+TEST_F(SocketInfoTestreadData, Failed)
 {
     readMode = READ_MODE::FAIL;
     char msg[256];
     ASSERT_THROW(i.readData(msg, 255), std::system_error);
 }
 
-TEST_F(SocketInfoTest, readDataTimeout)
+TEST_F(SocketInfoTestreadData, Timeout)
 {
     selectMode = SELECT_MODE::TIMEOUT;
     char msg[256];
     ASSERT_THROW(i.readData(msg, 255), TimeoutException);
 }
 
-TEST_F(SocketInfoTest, readDataDisconnect)
+TEST_F(SocketInfoTestreadData, Disconnect)
 {
     selectMode = SELECT_MODE::READY;
     readMode = READ_MODE::EOT;
@@ -216,7 +226,7 @@ TEST_F(SocketInfoTest, readDataDisconnect)
     }
 }
 
-TEST_F(SocketInfoTest, readData)
+TEST_F(SocketInfoTestreadData, GoodRead)
 {
     selectMode = SELECT_MODE::READY;
     readMode = READ_MODE::GOOD;
