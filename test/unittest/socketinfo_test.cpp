@@ -10,6 +10,7 @@
 #include "socketinfo.h"
 #include "timeoutexception.h"
 
+using namespace std;
 using namespace log4cplus;
 
 extern "C"
@@ -24,7 +25,15 @@ enum class SELECT_MODE { TIMEOUT, FAIL, READY };
 SELECT_MODE selectMode;
 int __wrap_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exeptfds, struct timeval *timeout)
 {
-    FD_CLR(sockfdSeed, readfds);
+    fd_set *target;
+    if(readfds)
+        target = readfds;
+    else if(writefds)
+        target = writefds;
+    else
+        throw invalid_argument("Neither readfds nor writefds is non-null");
+
+    FD_CLR(sockfdSeed, target);
 
     switch(selectMode)
     {
@@ -36,7 +45,7 @@ int __wrap_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exeptfds,
         return -1;
         break;
     default:
-        FD_SET(sockfdSeed, readfds);
+        FD_SET(sockfdSeed, target);
         break;
     }
 
@@ -244,6 +253,27 @@ TEST_F(SocketInfoTestreadData, GoodRead)
     });
     ASSERT_EQ(17, rslt);
     ASSERT_STREQ("FROM __wrap_read", msg);
+}
+
+typedef SocketInfoTest SocketInfoTestwaitForWriting;
+
+TEST_F(SocketInfoTestwaitForWriting, Timeout)
+{
+    selectMode = SELECT_MODE::TIMEOUT;
+    ASSERT_THROW(i.waitForWriting(), TimeoutException);
+}
+
+TEST_F(SocketInfoTestwaitForWriting, Fail)
+{
+    selectMode = SELECT_MODE::FAIL;
+    ASSERT_THROW(i.waitForWriting(), system_error);
+
+}
+
+TEST_F(SocketInfoTestwaitForWriting, Ready)
+{
+    selectMode = SELECT_MODE::READY;
+    ASSERT_NO_THROW(i.waitForWriting());
 }
 
 } //namespace cloudmutex
