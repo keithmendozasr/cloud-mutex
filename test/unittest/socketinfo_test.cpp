@@ -123,12 +123,12 @@ typedef SocketInfoTest SocketInfoTestparamConstructor;
 
 TEST_F(SocketInfoTestparamConstructor, FailFDParam)
 {
-    ASSERT_THROW(SocketInfo(2, NULL, 0), std::invalid_argument);
+    ASSERT_THROW(SocketInfo(2, NULL, 0), invalid_argument);
 }
 
 TEST_F(SocketInfoTestparamConstructor, FailaddrinfoParam)
 {
-    ASSERT_THROW(SocketInfo(3, NULL, 0), std::invalid_argument);
+    ASSERT_THROW(SocketInfo(3, NULL, 0), invalid_argument);
 }
 
 TEST_F(SocketInfoTestparamConstructor, goodParams)
@@ -142,7 +142,7 @@ typedef SocketInfoTest SocketInfoTestgetSocket;
 
 TEST_F(SocketInfoTestgetSocket, NotReady)
 {
-    ASSERT_THROW(i.getSocket(), std::logic_error);
+    ASSERT_THROW(i.getSocket(), logic_error);
 }
 
 TEST_F(SocketInfoTestgetSocket, SocketReady)
@@ -158,7 +158,7 @@ typedef SocketInfoTest SocketInfoTestgetSocketIP;
 TEST_F(SocketInfoTestgetSocketIP, NotReady)
 {
     SocketInfo i;
-    ASSERT_THROW(i.getSocketIP(), std::logic_error);
+    ASSERT_THROW(i.getSocketIP(), logic_error);
 }
 
 TEST_F(SocketInfoTestgetSocketIP, V4)
@@ -166,7 +166,7 @@ TEST_F(SocketInfoTestgetSocketIP, V4)
     seedSockFd();
     getAddrInfoInstance(AF_INET, true);
 
-    std::unique_ptr<char[]> buf(new char[INET_ADDRSTRLEN]);
+    unique_ptr<char[]> buf(new char[INET_ADDRSTRLEN]);
     struct sockaddr_in *t = (struct sockaddr_in *)servInfo->ai_addr;
     ASSERT_FALSE(inet_ntop(AF_INET, &(t->sin_addr), buf.get(), INET_ADDRSTRLEN) == nullptr);
     buf.get()[INET_ADDRSTRLEN-1] = '\0';
@@ -180,7 +180,7 @@ TEST_F(SocketInfoTestgetSocketIP, V6)
     seedSockFd();
     getAddrInfoInstance(AF_INET6, true);
 
-    std::unique_ptr<char[]> buf(new char[INET6_ADDRSTRLEN]);
+    unique_ptr<char[]> buf(new char[INET6_ADDRSTRLEN]);
     struct sockaddr_in6 *t = (struct sockaddr_in6 *)servInfo->ai_addr;
     ASSERT_FALSE(inet_ntop(AF_INET6, &(t->sin6_addr), buf.get(), INET6_ADDRSTRLEN) == nullptr);
     ASSERT_NO_THROW({
@@ -199,7 +199,7 @@ TEST_F(SocketInfoTestwaitForReading, Timeout)
 TEST_F(SocketInfoTestwaitForReading, Fail)
 {
     selectMode = SELECT_MODE::FAIL;
-    ASSERT_THROW(i.waitForReading(), std::system_error);
+    ASSERT_THROW(i.waitForReading(), system_error);
 
 }
 
@@ -215,7 +215,7 @@ TEST_F(SocketInfoTestreadData, Failed)
 {
     readMode = READ_MODE::FAIL;
     char msg[256];
-    ASSERT_THROW(i.readData(msg, 255), std::system_error);
+    ASSERT_THROW(i.readData(msg, 255), system_error);
 }
 
 TEST_F(SocketInfoTestreadData, Timeout)
@@ -236,7 +236,7 @@ TEST_F(SocketInfoTestreadData, Disconnect)
         i.readData(msg, 255);
         FAIL()<<"Exception should have been thrown";
     }
-    catch(std::system_error &e)
+    catch(system_error &e)
     {
         ASSERT_EQ(EPIPE, e.code().value());
     }
