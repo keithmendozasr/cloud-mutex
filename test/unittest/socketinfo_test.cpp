@@ -21,6 +21,11 @@ extern "C"
 
 const unsigned int sockfdSeed = 500;
 
+void makeFail(const string &msg, const unsigned int &line)
+{
+    ADD_FAILURE_AT(__FILE__, line)<<msg;
+}
+
 enum class SELECT_MODE { TIMEOUT, FAIL, READY };
 SELECT_MODE selectMode;
 int __wrap_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exeptfds, struct timeval *timeout)
@@ -31,7 +36,10 @@ int __wrap_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exeptfds,
     else if(writefds)
         target = writefds;
     else
-        throw invalid_argument("Neither readfds nor writefds is non-null");
+    {
+        makeFail("Neither readfds nor writefds is non-null", __LINE__);
+        return -1;
+    }
 
     FD_CLR(sockfdSeed, target);
 
