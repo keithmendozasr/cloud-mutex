@@ -17,6 +17,7 @@ extern "C"
 {
     int __wrap_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
     ssize_t __wrap_read(int fd, void *buf, size_t count);
+    ssize_t __wrap_write(int fd, const void *buf, size_t count);
 } //extern "C"
 
 const unsigned int sockfdSeed = 500;
@@ -78,6 +79,43 @@ ssize_t __wrap_read(int fd, void *buf, size_t count)
     return retVal;
 }
 
+enum class WRITE_MODE { FAIL, EOT, GOOD };
+WRITE_MODE writeMode;
+char *writeData = nullptr;
+int writeSize;
+ssize_t __wrap_write(int fd, const void *buf, size_t count)
+{
+    int retVal;
+
+    if(writeMode == WRITE_MODE::FAIL)
+    {
+        errno = EBADF;
+        retVal= -1;
+    }
+    else if(writeMode == WRITE_MODE::EOT)
+    {
+        errno = EPIPE;
+        retVal = -1;
+    }
+    else
+    {
+        try
+        {
+            writeSize = count;
+            writeData = new char[writeSize];
+            memmove(writeData, buf, writeSize);
+            retVal = writeSize;
+        }
+        catch(bad_alloc &e)
+        {
+            makeFail("Failed to allocate memory for writeData", __LINE__);
+            retVal = -1;
+        }
+    }
+
+    return retVal;
+}
+
 namespace cloudmutex
 {
 
@@ -101,6 +139,12 @@ protected:
         {
             freeaddrinfo(servInfo);
             servInfo = nullptr;
+        }
+
+        if(writeData != nullptr)
+        {
+            delete[] writeData;
+            writeData = nullptr;
         }
     }
         
@@ -282,6 +326,53 @@ TEST_F(SocketInfoTestwaitForWriting, Ready)
 {
     selectMode = SELECT_MODE::READY;
     ASSERT_NO_THROW(i.waitForWriting());
+}
+
+typedef SocketInfoTest SocketInfoTestwriteData;
+
+TEST_F(SocketInfoTestwriteData, Failed)
+{
+    selectMode = SELECT_MODE::READY;
+    writeMode = WRITE_MODE::FAIL;
+    char msg[]="TEST";
+    ASSERT_THROW(i.writeData(msg, sizeof(msg)), system_error);
+}
+
+TEST_F(SocketInfoTestwriteData, Timeout)
+{
+    selectMode = SELECT_MODE::TIMEOUT;
+    char msg[]="TEST";
+    ASSERT_THROW(i.writeData(msg, sizeof(msg)), TimeoutException);
+}
+
+TEST_F(SocketInfoTestwriteData, Disconnect)
+{
+    selectMode = SELECT_MODE::READY;
+    writeMode = WRITE_MODE::EOT;
+    char msg[]="TEST";
+
+    try
+    {
+        i.writeData(msg, sizeof(msg));
+        FAIL()<<"Exception should have been thrown";
+    }
+    catch(system_error &e)
+    {
+        ASSERT_EQ(EPIPE, e.code().value());
+    }
+}
+
+TEST_F(SocketInfoTestwriteData, GoodRead)
+{
+    selectMode = SELECT_MODE::READY;
+    writeMode = WRITE_MODE::GOOD;
+    const char msg[] = "WRITE DATA";
+    size_t rslt;
+    ASSERT_NO_THROW({
+        rslt = i.writeData(msg, sizeof(msg));
+    });
+    ASSERT_EQ(sizeof(msg), rslt);
+    ASSERT_STREQ(msg, writeData);
 }
 
 } //namespace cloudmutex
