@@ -92,17 +92,10 @@ void SocketInfo::initSocket()
         if (sockfd == -1) 
         {
             int err = errno;
-            LOG4CPLUS_TRACE(logger, "Value of err: "<<err<<" String: "<<strerror(err));
-            switch(err)
-            {
-            case EISCONN:
-            case EMFILE:
-            case ENFILE:
-                throw runtime_error(string("Failed to get socket fd: ") + strerror(err));
-            default:
-                LOG4CPLUS_TRACE(logger, "No socket there, trying next entry");
-                continue;
-            }
+            char buf[256];
+            char *errmsg = strerror_r(err, buf, 256);
+            LOG4CPLUS_TRACE(logger, "Value of err: "<<err<<" String: "<<errmsg);
+            throw runtime_error(string("Failed to get socket fd: ") + errmsg);
         }
         else
         {
