@@ -157,9 +157,12 @@ const string SocketInfo::getSocketIP() const
 		struct sockaddr_in6 *t = (struct sockaddr_in6 *)&addrInfo;
 		if(inet_ntop(t->sin6_family, &(t->sin6_addr), buf, INET6_ADDRSTRLEN) == nullptr)
 		{
+            int err = errno;
+            char errbuf[256];
+            char *errmsg = strerror_r(err, errbuf, 256);
 			delete[] buf;
 			string msg("Failed to translate IP address: ");
-			msg += strerror(errno);
+			msg += errmsg;
 			throw msg;
 		}
 		buf[INET6_ADDRSTRLEN-1] = '\0';
@@ -222,10 +225,7 @@ void SocketInfo::waitForReading(const unsigned int timeout)
         if(retVal == -1)
         {
             int err = errno;
-            char errmsg[256];
-            strerror_r(err, errmsg, 256);
-            LOG4CPLUS_WARN(logger, "Error encountered waiting for socket to be ready. Error message: " << errmsg);
-            throw system_error(err, generic_category(), errmsg);
+            throw system_error(err, generic_category(), "Error waiting for socket to be ready for reading.");
         }
         else if(retVal == 0)
         {
@@ -281,9 +281,7 @@ void SocketInfo::waitForWriting(const unsigned int timeout)
         if(retVal == -1)
         {
             int err = errno;
-            char errmsg[256];
-            strerror_r(err, errmsg, 256);
-            throw system_error(err, generic_category(), errmsg);
+            throw system_error(err, generic_category(), "Error waiting for socket to be ready for writing.");
         }
         else if(retVal == 0)
         {
@@ -304,9 +302,7 @@ const size_t SocketInfo::writeData(const char *msg, const size_t &msgSize)
     if(retVal < 0)
     {
         int err = errno;
-        char errmsg[256];
-        strerror_r(err, errmsg, 256);
-        throw system_error(err, generic_category(), errmsg);
+        throw system_error(err, generic_category(), "Error writing data to socket.");
     }
     else
         LOG4CPLUS_TRACE(logger, "Wrote "<<retVal<<" bytes");

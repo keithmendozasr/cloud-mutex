@@ -52,8 +52,8 @@ const bool ClientSocket::initClient(const unsigned &port, const string &server)
                     socklen_t len = sizeof(val);
                     if((err = getsockopt(getSocket(), SOL_SOCKET, SO_ERROR, &val, &len)))
                     {
-                        char errmsg[256];
-                        strerror_r(err, errmsg, 256);
+                        char buf[256];
+                        char *errmsg = strerror_r(err, buf, 256);
                         LOG4CPLUS_ERROR(logger, "Failed to connect to server. Error message: "<<errmsg);
                         retVal = false;
                     }
@@ -68,8 +68,8 @@ const bool ClientSocket::initClient(const unsigned &port, const string &server)
                 }
                 else
                 {
-                    char errmsg[256];
-                    strerror_r(err, errmsg, 256);
+                    char buf[256];
+                    char *errmsg = strerror_r(err, buf, 256);
                     LOG4CPLUS_ERROR(logger, "Failed to connect to server. Error message: "<<errmsg);
                     retVal = false;
                     break;
