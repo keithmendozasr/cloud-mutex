@@ -159,9 +159,12 @@ protected:
      */
     void setAddrInfo(const sockaddr_storage *addr, const size_t &addrSize);
 
-    inline void throwSystemError(const int &err, const std::string &msg)
+    inline void throwSystemError(const int &err, const std::string &msg = "")
     {
-        throw std::system_error(err, std::system_category(), msg);
+        if(msg == "")
+            throw std::system_error(err, std::generic_category());
+        else
+            throw std::system_error(err, std::generic_category(), msg);
     }
 
 private:

@@ -195,7 +195,7 @@ void SocketInfo::waitForReading(const unsigned int timeout)
         if(retVal == -1)
         {
             int err = errno;
-            throw system_error(err, generic_category(), "Error waiting for socket to be ready for reading.");
+            throwSystemError(err, "Error waiting for socket to be ready for reading.");
         }
         else if(retVal == 0)
         {
@@ -219,10 +219,10 @@ const size_t SocketInfo::readData(char *data, const size_t &dataSize)
     if(retVal < 0)
     {
         int err = errno;
-        throw system_error(err, generic_category(), "Error reading from socket");
+        throwSystemError(err, "Error reading from socket");
     }
     else if(retVal == 0)
-        throw system_error(EPIPE, generic_category());
+        throwSystemError(EPIPE);
     else
         LOG4CPLUS_TRACE(logger, "read complete. Value of retVal: " <<retVal);
 
@@ -251,7 +251,7 @@ void SocketInfo::waitForWriting(const unsigned int timeout)
         if(retVal == -1)
         {
             int err = errno;
-            throw system_error(err, generic_category(), "Error waiting for socket to be ready for writing.");
+            throwSystemError(err,"Error waiting for socket to be ready for writing.");
         }
         else if(retVal == 0)
         {
@@ -272,7 +272,7 @@ const size_t SocketInfo::writeData(const char *msg, const size_t &msgSize)
     if(retVal < 0)
     {
         int err = errno;
-        throw system_error(err, generic_category(), "Error writing data to socket.");
+        throwSystemError(err,"Error writing data to socket.");
     }
     else
         LOG4CPLUS_TRACE(logger, "Wrote "<<retVal<<" bytes");
