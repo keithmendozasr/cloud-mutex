@@ -18,6 +18,8 @@ extern "C"
     int __wrap_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
     ssize_t __wrap_read(int fd, void *buf, size_t count);
     ssize_t __wrap_write(int fd, const void *buf, size_t count);
+    extern int __real_socket(int domain, int type, int protocol);
+    int __wrap_socket(int domain, int type, int protocol);
 } //extern "C"
 
 const unsigned int sockfdSeed = 500;
@@ -116,6 +118,19 @@ ssize_t __wrap_write(int fd, const void *buf, size_t count)
     return retVal;
 }
 
+enum class SOCKET_MODE { FAIL, GOOD };
+SOCKET_MODE socketMode;
+int __wrap_socket(int domain, int type, int protocol)
+{
+    if(socketMode == SOCKET_MODE::FAIL)
+    {
+        errno = ENFILE;
+        return -1;
+    }
+
+    return __real_socket(domain, type, protocol);
+}
+
 namespace cloudmutex
 {
 
@@ -148,7 +163,7 @@ protected:
         }
     }
         
-    void getAddrInfoInstance(const int &ai_family = AF_UNSPEC, const bool &loadOnaddrInfo = false)
+    void getAddrInfoInstance(const int &ai_family = AF_UNSPEC, const bool &loadOnaddrInfo = false, const string &hostname = "example.com", const string &port = "9876")
     {
         struct addrinfo hints;    
         memset(&hints, 0, sizeof hints);
@@ -156,7 +171,7 @@ protected:
         hints.ai_socktype = SOCK_STREAM;
         hints.ai_flags = AI_PASSIVE; // use my IP
 
-        ASSERT_EQ(0, getaddrinfo("localhost", "9876", &hints, &servInfo));
+        ASSERT_EQ(0, getaddrinfo(hostname.c_str(), port.c_str(), &hints, &servInfo));
 
         if(loadOnaddrInfo)
             memmove(&(i.addrInfo), servInfo->ai_addr, servInfo->ai_addrlen);
@@ -165,6 +180,16 @@ protected:
     void seedSockFd()
     {
         i.sockfd = sockfdSeed;
+    }
+
+    void initSocket()
+    {
+        i.initSocket();
+    }
+
+    void initSocket(const unsigned int &port, const std::string &host = "")
+    {
+        i.initSocket(port, host);
     }
 
     SocketInfo i;
@@ -252,7 +277,6 @@ TEST_F(SocketInfoTestwaitForReading, Fail)
 {
     selectMode = SELECT_MODE::FAIL;
     ASSERT_THROW(i.waitForReading(), system_error);
-
 }
 
 TEST_F(SocketInfoTestwaitForReading, Ready)
@@ -373,6 +397,104 @@ TEST_F(SocketInfoTestwriteData, GoodRead)
     });
     ASSERT_EQ(sizeof(msg), rslt);
     ASSERT_STREQ(msg, writeData);
+}
+
+class SocketInfoTestinitSocketNoParam : public SocketInfoTest
+{
+protected:
+    virtual void TearDown()
+    {
+        i.servInfo = nullptr;
+        SocketInfoTest::TearDown();
+    }
+
+    void getAddrInfoInstance(const int &ai_family = AF_UNSPEC, const bool &loadOnservInfo = false, const bool &loadOnnextServ = false)
+    {
+        SocketInfoTest::getAddrInfoInstance();
+
+        if(loadOnservInfo)
+            i.servInfo = servInfo;
+
+        if(loadOnnextServ)
+            i.nextServ = servInfo;
+    }
+};
+
+TEST_F(SocketInfoTestinitSocketNoParam, BadServInfo)
+{
+    ASSERT_THROW(initSocket(), logic_error);
+
+    try
+    {
+        initSocket();
+    }
+    catch(logic_error &e)
+    {
+        ASSERT_STREQ("Host info not resolved yet", e.what());
+    }
+    catch(...)
+    {
+        FAIL()<<"Unexpected exception encountered";
+    }
+}
+
+TEST_F(SocketInfoTestinitSocketNoParam, BadNextServ)
+{
+    getAddrInfoInstance(AF_UNSPEC, true);
+    ASSERT_THROW(initSocket(), range_error);
+
+    try
+    {
+        initSocket();
+    }
+    catch(range_error &e)
+    {
+        ASSERT_STREQ("No more resolved IP's to try", e.what());
+    }
+    catch(...)
+    {
+        FAIL()<<"Unexpected exception encountered";
+    }
+}
+
+TEST_F(SocketInfoTestinitSocketNoParam, SocketFail)
+{
+    socketMode = SOCKET_MODE::FAIL;
+    getAddrInfoInstance(AF_UNSPEC, true, true);
+    ASSERT_THROW(initSocket(), runtime_error);
+}
+
+TEST_F(SocketInfoTestinitSocketNoParam, SocketGood)
+{
+    socketMode = SOCKET_MODE::GOOD;
+    getAddrInfoInstance(AF_UNSPEC, true, true);
+    ASSERT_NO_THROW(initSocket());
+
+    ASSERT_TRUE(servInfo->ai_next != NULL) << "example.com should have returned at least 2 IP addresses";
+    ASSERT_FALSE(i.nextServ == nullptr);
+    ASSERT_EQ(servInfo->ai_next, i.nextServ);
+
+    SCOPED_TRACE("Try next address");
+    if(i.nextServ->ai_next)
+    {
+        //Cut off the last address
+        struct addrinfo *tmp = i.nextServ->ai_next;
+        i.nextServ->ai_next = NULL;
+        freeaddrinfo(tmp);
+    }
+
+    ASSERT_NO_THROW(initSocket());
+
+    SCOPED_TRACE("Only one IP resolved");
+    getAddrInfoInstance();
+    freeaddrinfo(servInfo->ai_next);
+    servInfo->ai_next = NULL;
+    i.servInfo = servInfo;
+    i.nextServ = servInfo;
+
+    ASSERT_NO_THROW(initSocket());
+    ASSERT_TRUE(i.nextServ == nullptr);
+    ASSERT_THROW(initSocket(), range_error);
 }
 
 } //namespace cloudmutex

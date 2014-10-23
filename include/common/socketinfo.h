@@ -27,6 +27,9 @@ class SocketInfo
 {
     #ifdef GTEST_ENABLED
     friend class SocketInfoTest;
+    friend class SocketInfoTestinitSocketNoParam;
+
+    FRIEND_TEST(SocketInfoTestinitSocketNoParam, SocketGood);
     #endif
 
 public:
