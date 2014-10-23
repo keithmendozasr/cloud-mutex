@@ -502,4 +502,52 @@ TEST_F(SocketInfoTestinitSocketNoParam, SocketGood)
     ASSERT_THROW(initSocket(), range_error);
 }
 
+typedef SocketInfoTest SocketInfoTestinitSocket;
+
+TEST_F(SocketInfoTestinitSocket, Initialized)
+{
+    seedSockFd();
+    ASSERT_THROW(initSocket(9876), logic_error);
+    try
+    {
+        initSocket(9876);
+    }
+    catch(const logic_error &e)
+    {
+        ASSERT_STREQ("Instance already initialized", e.what());
+    }
+    catch(...)
+    {
+        FAIL() <<"Unexpected exception caught";
+    }
+}
+
+TEST_F(SocketInfoTestinitSocket, BadPort)
+{
+    ASSERT_THROW(initSocket(70000), invalid_argument);
+    try
+    {
+        initSocket(70000);
+    }
+    catch(const logic_error &e)
+    {
+        ASSERT_STREQ("port parameter > 65535", e.what());
+    }
+    catch(...)
+    {
+        FAIL() <<"Unexpected exception caught";
+    }
+}
+
+TEST_F(SocketInfoTestinitSocket, FailedAddress)
+{
+    ASSERT_THROW(initSocket(9876, "blah"), runtime_error);
+}
+
+TEST_F(SocketInfoTestinitSocket, GoodAddress)
+{
+    ASSERT_NO_THROW(initSocket(9876, "example.com"));
+    ASSERT_NE(-1, i.sockfd);
+}
+
 } //namespace cloudmutex

@@ -30,6 +30,7 @@ class SocketInfo
     friend class SocketInfoTestinitSocketNoParam;
 
     FRIEND_TEST(SocketInfoTestinitSocketNoParam, SocketGood);
+    FRIEND_TEST(SocketInfoTestinitSocket, GoodAddress);
     #endif
 
 public:
