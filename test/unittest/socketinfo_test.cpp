@@ -6,6 +6,8 @@
 #include <regex>
 
 #include <log4cplus/nullappender.h>
+/* For the random occasion that I want to see the log output
+#include <log4cplus/consoleappender.h>*/
 
 #include "socketinfo.h"
 #include "timeoutexception.h"
@@ -143,6 +145,9 @@ protected:
         logger.removeAllAppenders();
         logger.addAppender(SharedAppenderPtr(new NullAppender));
         logger.setLogLevel(OFF_LOG_LEVEL);
+        /* For the random occasion that I want to see the log output
+        logger.addAppender(SharedAppenderPtr(new ConsoleAppender));
+        logger.setLogLevel(TRACE_LOG_LEVEL);*/
     }
 
     virtual void TearDown()
