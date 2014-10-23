@@ -34,7 +34,7 @@ void SocketInfo::initSocket(const unsigned int &port, const string &host)
 	if(sockfd != -1)
     {
         if(!servInfo)
-            throw logic_error("Instance already intialized");
+            throw logic_error("Instance already initialized");
     }
 
     if(port > 65535)
