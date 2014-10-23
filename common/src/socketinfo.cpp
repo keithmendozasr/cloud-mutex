@@ -74,51 +74,33 @@ void SocketInfo::initSocket()
     else
         LOG4CPLUS_TRACE(logger, "Initialize socket");
 
-    struct addrinfo *addrInfoItem;
-    for(addrInfoItem = nextServ; addrInfoItem != NULL; addrInfoItem = addrInfoItem->ai_next) 
+    struct addrinfo *addrInfoItem = nextServ;
+    static const bool logTrace = logger.isEnabledFor(TRACE_LOG_LEVEL);
+    if(logTrace)
     {
-        static const bool logTrace = logger.isEnabledFor(TRACE_LOG_LEVEL);
-        if(logTrace)
-        {
-            char hostname[NI_MAXHOST];
-            int errnum = getnameinfo(addrInfoItem->ai_addr, addrInfoItem->ai_addrlen, hostname, sizeof(hostname), NULL, 0, NI_NUMERICHOST);
-            if((errnum != 0))
-                LOG4CPLUS_TRACE(logger, "getnameinfo errored out: " <<gai_strerror(errnum));
-            else
-                LOG4CPLUS_TRACE(logger, "IP to try: "<<hostname);
-        }
-        LOG4CPLUS_TRACE(logger, "Attempt to get socket");
-        sockfd = socket(addrInfoItem->ai_family, addrInfoItem->ai_socktype | SOCK_NONBLOCK, addrInfoItem->ai_protocol);
-        if (sockfd == -1) 
-        {
-            int err = errno;
-            char buf[256];
-            char *errmsg = strerror_r(err, buf, 256);
-            LOG4CPLUS_TRACE(logger, "Value of err: "<<err<<" String: "<<errmsg);
-            throw runtime_error(string("Failed to get socket fd: ") + errmsg);
-        }
+        char hostname[NI_MAXHOST];
+        int errnum = getnameinfo(addrInfoItem->ai_addr, addrInfoItem->ai_addrlen, hostname, sizeof(hostname), NULL, 0, NI_NUMERICHOST);
+        if((errnum != 0))
+            LOG4CPLUS_TRACE(logger, "getnameinfo errored out: " <<gai_strerror(errnum));
         else
-        {
-            LOG4CPLUS_DEBUG(logger, "Socket ready");
-            break;
-        }
+            LOG4CPLUS_TRACE(logger, "IP to try: "<<hostname);
     }
-
-    if(sockfd == -1)
+    LOG4CPLUS_TRACE(logger, "Attempt to get socket");
+    sockfd = socket(addrInfoItem->ai_family, addrInfoItem->ai_socktype | SOCK_NONBLOCK, addrInfoItem->ai_protocol);
+    if (sockfd == -1) 
     {
-        throw runtime_error("No address info found");
+        int err = errno;
+        char buf[256];
+        char *errmsg = strerror_r(err, buf, 256);
+        LOG4CPLUS_TRACE(logger, "Value of err: "<<err<<" String: "<<errmsg);
+        throw runtime_error(string("Failed to get socket fd: ") + errmsg);
     }
-	
-
-    LOG4CPLUS_TRACE(logger, "Value of addrInfoItem after for loop: "<<addrInfoItem);
-    if(addrInfoItem)
+    else
     {
+        LOG4CPLUS_DEBUG(logger, "Socket ready");
         setAddrInfo((const struct sockaddr_storage *)addrInfoItem->ai_addr, addrInfoItem->ai_addrlen);
         nextServ = addrInfoItem->ai_next;
     }
-    else
-        nextServ = NULL;
-
     LOG4CPLUS_TRACE(logger, "Value of nextServ: "<<nextServ);
 }
 
