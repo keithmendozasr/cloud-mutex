@@ -4,6 +4,7 @@ check_PROGRAMS=socketinfo
 TESTS=$(check_PROGRAMS)
 
 socketinfo_SOURCES=\
+    syswrap.cpp \
     socketinfo_test.cpp \
     $(top_builddir)/common/src/socketinfo.cpp \
     $(GTEST_DIR)/src/gtest-all.cc
